@@ -65,9 +65,7 @@ describe('Projects Component', () => {
 
     render(<Projects />)
 
-    expect(
-      screen.getByText('Loading projects from GitHub...')
-    ).toBeInTheDocument()
+    expect(document.querySelector('.spinner')).toBeInTheDocument()
   })
 
   it('renders projects after successful API call', async () => {

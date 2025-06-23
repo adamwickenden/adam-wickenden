@@ -59,9 +59,7 @@ describe('Experience Component', () => {
   it('renders loading state initially', () => {
     render(<Experience />)
 
-    expect(
-      screen.getByText('Loading professional experience data...')
-    ).toBeInTheDocument()
+    expect(document.querySelector('.loading-spinner')).toBeInTheDocument()
   })
 
   it('renders page header correctly after loading', async () => {

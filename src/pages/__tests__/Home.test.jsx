@@ -23,7 +23,7 @@ describe('Home Component', () => {
   it('renders loading state initially', () => {
     render(<Home />)
 
-    expect(screen.getByText('Loading profile data...')).toBeInTheDocument()
+    expect(document.querySelector('.loading-spinner')).toBeInTheDocument()
   })
 
   it('renders personal information correctly after loading', async () => {
