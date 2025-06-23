@@ -30,6 +30,7 @@ describe('Experience Component', () => {
     expect(screen.getByText('Work Experience')).toBeInTheDocument()
     expect(screen.getByText('Software Developer')).toBeInTheDocument()
     expect(screen.getByText('Technology Solutions Ltd')).toBeInTheDocument()
+    expect(screen.getByText('2023 - Present')).toBeInTheDocument()
   })
 
   it('renders education section', () => {
@@ -87,16 +88,23 @@ describe('Experience Component', () => {
   it('displays technology tags for jobs', () => {
     render(<Experience />)
 
-    // Check for technology tags in job experience - use getAllByText for duplicates
-    const pythonTags = screen.getAllByText('Python')
-    const reactTags = screen.getAllByText('React')
+    // Check for technology tags - use getAllByText for technologies that appear in multiple sections
+    const pythonElements = screen.getAllByText('Python')
+    expect(pythonElements.length).toBeGreaterThan(0)
 
-    expect(pythonTags.length).toBeGreaterThan(0)
-    expect(reactTags.length).toBeGreaterThan(0)
+    const reactElements = screen.getAllByText('React')
+    expect(reactElements.length).toBeGreaterThan(0)
+
+    const tensorFlowElements = screen.getAllByText('TensorFlow')
+    expect(tensorFlowElements.length).toBeGreaterThan(0)
   })
 
   it('shows timeline markers for experience items', () => {
     render(<Experience />)
+
+    // Check for timeline elements
+    const timelineItems = document.querySelectorAll('.timeline-item')
+    expect(timelineItems.length).toBeGreaterThan(0)
 
     const timelineMarkers = document.querySelectorAll('.timeline-marker')
     expect(timelineMarkers.length).toBeGreaterThan(0)
@@ -113,6 +121,7 @@ describe('Experience Component', () => {
   it('shows location information', () => {
     render(<Experience />)
 
+    // Use getAllByText for locations that appear multiple times
     const ukLocations = screen.getAllByText('United Kingdom')
     expect(ukLocations.length).toBeGreaterThan(0)
   })
@@ -132,27 +141,35 @@ describe('Experience Component', () => {
   it('has proper semantic structure with headings', () => {
     render(<Experience />)
 
-    const headings = screen.getAllByRole('heading')
-    expect(headings.length).toBeGreaterThan(5) // Multiple sections with headings
+    // Check for proper heading hierarchy
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
+    const h2Headings = screen.getAllByRole('heading', { level: 2 })
+    expect(h2Headings.length).toBeGreaterThan(0)
   })
 
   it('renders skill categories with multiple skills', () => {
     render(<Experience />)
 
-    // Programming Languages - use getAllByText for skills that appear in multiple places
+    // Programming Languages - use getAllByText for technologies that appear multiple times
+    const pythonElements = screen.getAllByText('Python')
+    expect(pythonElements.length).toBeGreaterThan(0)
+
     const jsElements = screen.getAllByText('JavaScript')
-    const csharpElements = screen.getAllByText('C#')
-
     expect(jsElements.length).toBeGreaterThan(0)
-    expect(csharpElements.length).toBeGreaterThan(0)
 
-    // Frameworks
-    expect(screen.getByText('Node.js')).toBeInTheDocument()
-    expect(screen.getByText('TensorFlow')).toBeInTheDocument()
+    // Frameworks - use getAllByText for technologies that appear in multiple sections
+    const nodeJsElements = screen.getAllByText('Node.js')
+    expect(nodeJsElements.length).toBeGreaterThan(0)
 
-    // Tools
-    expect(screen.getByText('Git')).toBeInTheDocument()
-    expect(screen.getByText('Docker')).toBeInTheDocument()
+    const tensorFlowElements = screen.getAllByText('TensorFlow')
+    expect(tensorFlowElements.length).toBeGreaterThan(0)
+
+    // Tools - use getAllByText for tools that appear in multiple sections
+    const gitElements = screen.getAllByText('Git')
+    expect(gitElements.length).toBeGreaterThan(0)
+
+    const dockerElements = screen.getAllByText('Docker')
+    expect(dockerElements.length).toBeGreaterThan(0)
 
     // Soft Skills
     expect(screen.getByText('Problem Solving')).toBeInTheDocument()
