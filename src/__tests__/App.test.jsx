@@ -13,6 +13,49 @@ vi.mock('axios', () => ({
   },
 }))
 
+// Mock the CV service
+vi.mock('../services/cvService', () => ({
+  default: {
+    fetchProfile: vi.fn().mockResolvedValue({
+      profile: {
+        name: 'Adam Wickenden',
+        title: 'Senior Data Scientist',
+        summary:
+          'Passionate software developer with experience in machine learning, robotics, and full-stack development.',
+        email: 'adamwickenden94@gmail.com',
+        location: 'London',
+      },
+      workExperience: [
+        {
+          company: 'Faculty.ai',
+          position: 'Senior Data Scientist',
+          startDate: '2021-11',
+          endDate: 'Present',
+          location: 'London',
+          achievements: ['Led drone classification projects'],
+        },
+      ],
+      education: [
+        {
+          institution: 'University of Birmingham',
+          degree: 'MSci Physics',
+          startDate: '2014',
+          endDate: '2018',
+          location: 'Birmingham, UK',
+          grade: '1st Class Honours',
+        },
+      ],
+      certifications: [
+        {
+          name: "Andrew Ng's Machine Learning Course",
+          issuer: 'Coursera',
+          issueDate: '2020',
+        },
+      ],
+    }),
+  },
+}))
+
 describe('App Component Integration Tests', () => {
   // Test individual components with routing instead of the full App
   const renderWithRouter = (initialEntries = ['/']) => {
@@ -39,11 +82,12 @@ describe('App Component Integration Tests', () => {
     const adamNames = screen.getAllByText('Adam Wickenden')
     expect(adamNames.length).toBeGreaterThan(0)
 
-    // Home page content should be present
-    expect(
-      screen.getByText('Software Developer & Technology Enthusiast')
-    ).toBeInTheDocument()
-    expect(screen.getByText('Technical Skills')).toBeInTheDocument()
+    // Home page content should be present - wait for async loading
+    await waitFor(() => {
+      expect(screen.getByText('About Me')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('Publications')).toBeInTheDocument()
   })
 
   it('navigates to projects page', async () => {
@@ -54,25 +98,33 @@ describe('App Component Integration Tests', () => {
       expect(screen.getByText('My Projects')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('GitHub Repositories')).toBeInTheDocument()
+    expect(screen.getByText('Machine Learning Projects')).toBeInTheDocument()
   })
 
   it('navigates to experience page', async () => {
     renderWithRouter(['/experience'])
 
-    // Should show experience page content
-    expect(screen.getByText('Professional Experience')).toBeInTheDocument()
-    expect(screen.getByText('Work Experience')).toBeInTheDocument()
+    // Should show experience page content - need to wait for async loading
+    await waitFor(() => {
+      expect(screen.getByText('Professional Experience')).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('Work Experience')).toBeInTheDocument()
+    })
   })
 
-  it('has proper page structure', () => {
+  it('has proper page structure', async () => {
     renderWithRouter(['/'])
 
     // Check for main structural elements - use getAllByText for duplicates
     const adamNames = screen.getAllByText('Adam Wickenden')
     expect(adamNames.length).toBeGreaterThan(0) // Navigation and Home content
 
-    expect(screen.getByText('About Me')).toBeInTheDocument() // Home content
+    // Wait for async home content to load
+    await waitFor(() => {
+      expect(screen.getByText('About Me')).toBeInTheDocument() // Home content
+    })
 
     // Check navigation links exist
     const homeLinks = screen.getAllByText('Home')
