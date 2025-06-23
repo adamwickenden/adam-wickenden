@@ -109,7 +109,9 @@
   justify-content: center;
   color: white;
   z-index: 2;
-  box-shadow: 0 0 0 4px white, 0 0 0 6px #667eea;
+  box-shadow:
+    0 0 0 4px white,
+    0 0 0 6px #667eea;
 }
 
 .timeline-content {
@@ -155,7 +157,8 @@
   color: #4a5568;
 }
 
-.job-type, .grade {
+.job-type,
+.grade {
   background: #e2e8f0;
   color: #4a5568;
   padding: 0.25rem 0.5rem;
@@ -378,46 +381,46 @@
   .experience-container {
     padding: 0 1rem;
   }
-  
+
   .experience-header h1 {
     font-size: 2.5rem;
   }
-  
+
   .timeline {
     padding-left: 1.5rem;
   }
-  
+
   .timeline::before {
     left: 0.75rem;
   }
-  
+
   .timeline-marker {
     left: -1.75rem;
     width: 2.5rem;
     height: 2.5rem;
     top: 1rem;
   }
-  
+
   .timeline-content {
     padding: 1.5rem;
   }
-  
+
   .timeline-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .timeline-subtitle {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .certifications-grid,
   .skills-categories {
     grid-template-columns: 1fr;
   }
-  
+
   .modules-grid {
     grid-template-columns: 1fr;
   }
@@ -427,13 +430,13 @@
   .experience-header h1 {
     font-size: 2rem;
   }
-  
+
   .timeline-content {
     padding: 1rem;
   }
-  
+
   .certification-card,
   .skill-category {
     padding: 1.5rem;
   }
-} 
+}

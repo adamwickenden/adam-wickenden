@@ -10,7 +10,7 @@ const Navigation = () => {
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/projects', label: 'Projects' },
-    { path: '/experience', label: 'Experience' }
+    { path: '/experience', label: 'Experience' },
   ]
 
   const toggleMenu = () => {
@@ -23,10 +23,10 @@ const Navigation = () => {
         <Link to="/" className="nav-logo">
           Adam Wickenden
         </Link>
-        
+
         {/* Desktop Navigation */}
         <ul className="nav-menu">
-          {navItems.map((item) => (
+          {navItems.map(item => (
             <li key={item.path} className="nav-item">
               <Link
                 to={item.path}
@@ -45,7 +45,7 @@ const Navigation = () => {
 
         {/* Mobile Navigation */}
         <ul className={`mobile-menu ${isMenuOpen ? 'active' : ''}`}>
-          {navItems.map((item) => (
+          {navItems.map(item => (
             <li key={item.path} className="mobile-nav-item">
               <Link
                 to={item.path}
@@ -62,4 +62,4 @@ const Navigation = () => {
   )
 }
 
-export default Navigation 
+export default Navigation

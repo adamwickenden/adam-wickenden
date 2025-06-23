@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import PropTypes from 'prop-types'
 import { Github, ExternalLink, Star, GitFork, Eye, Play } from 'lucide-react'
 import axios from 'axios'
 import './Projects.css'
@@ -8,148 +9,156 @@ const Projects = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Unity projects that can be embedded
-  const unityProjects = [
-    {
-      name: 'Solar System',
-      description: 'Interactive 3D solar system simulation built with Unity',
-      embedUrl: '/unity/solarsystem/index.html', // Would need to be built and hosted
-      repository: 'solarsystem',
-      screenshot: '/images/solarsystem-screenshot.png',
-      isPlayable: false // Set to true when Unity build is available
-    }
-  ]
-
-  useEffect(() => {
-    fetchGitHubRepositories()
-  }, [])
-
-  const fetchGitHubRepositories = async () => {
+  const fetchGitHubRepositories = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await axios.get('https://api.github.com/users/adamwickenden/repos', {
-        params: {
-          sort: 'updated',
-          per_page: 20
+      const response = await axios.get(
+        'https://api.github.com/users/adamwickenden/repos',
+        {
+          params: {
+            per_page: 20,
+          },
         }
-      })
+      )
 
-      // Filter out forks and private repos, and add additional project information
-      const filteredRepos = response.data
-        .filter(repo => !repo.fork && !repo.private)
+      const repos = response.data
+        .filter(repo => !repo.private && !repo.fork)
         .map(repo => ({
           ...repo,
-          // Add custom project information based on repository name
-          project_type: getProjectType(repo.name),
-          tech_stack: getTechStack(repo.language, repo.topics),
-          featured: isFeaturedProject(repo.name)
+          featured: isFeaturedProject(repo.name),
+          type: getProjectType(repo.name),
+          techStack: getTechStack(repo),
         }))
         .sort((a, b) => {
-          // Sort featured projects first
           if (a.featured && !b.featured) return -1
           if (!a.featured && b.featured) return 1
           return new Date(b.updated_at) - new Date(a.updated_at)
         })
 
-      setRepositories(filteredRepos)
+      setRepositories(repos)
+      setError(null)
     } catch (err) {
-      setError('Failed to fetch GitHub repositories')
       console.error('Error fetching repositories:', err)
+      setError('Failed to fetch GitHub repositories')
     } finally {
       setLoading(false)
     }
+  }, [])
+
+  useEffect(() => {
+    fetchGitHubRepositories()
+  }, [fetchGitHubRepositories])
+
+  // Helper function to determine if a project is featured
+  const isFeaturedProject = repoName => {
+    const featuredProjects = [
+      'robocar',
+      'tensorflownbs',
+      'solarsystem',
+      'modelinterp',
+    ]
+    return featuredProjects.includes(repoName.toLowerCase())
   }
 
-  const getProjectType = (repoName) => {
+  // Helper function to categorize projects
+  const getProjectType = repoName => {
     const name = repoName.toLowerCase()
-    if (name.includes('unity') || name.includes('game') || name.includes('solar')) return 'Unity/Game'
-    if (name.includes('tensor') || name.includes('ml') || name.includes('model')) return 'Machine Learning'
-    if (name.includes('web') || name.includes('react') || name.includes('website')) return 'Web Development'
+    if (
+      name.includes('unity') ||
+      name.includes('game') ||
+      name.includes('solar')
+    )
+      return 'Game/Unity'
+    if (
+      name.includes('tensor') ||
+      name.includes('ml') ||
+      name.includes('model')
+    )
+      return 'Machine Learning'
+    if (
+      name.includes('web') ||
+      name.includes('react') ||
+      name.includes('website')
+    )
+      return 'Web Development'
     if (name.includes('robot') || name.includes('iot')) return 'Robotics/IoT'
     return 'Software'
   }
 
-  const getTechStack = (language, topics = []) => {
+  // Helper function to get tech stack from repository
+  const getTechStack = repo => {
     const stack = []
-    if (language) stack.push(language)
-    
-    // Add common tech stack items based on topics
-    topics.forEach(topic => {
-      const topicMap = {
-        'react': 'React',
-        'unity': 'Unity',
-        'tensorflow': 'TensorFlow',
-        'python': 'Python',
-        'javascript': 'JavaScript',
-        'csharp': 'C#',
-        'firebase': 'Firebase',
-        'machine-learning': 'ML'
-      }
-      if (topicMap[topic]) stack.push(topicMap[topic])
-    })
+    if (repo.language) stack.push(repo.language)
 
-    return [...new Set(stack)] // Remove duplicates
+    // Add common technologies based on repository topics or name
+    const topics = repo.topics || []
+    const name = repo.name.toLowerCase()
+
+    if (topics.includes('react') || name.includes('react')) stack.push('React')
+    if (topics.includes('unity') || name.includes('unity')) stack.push('Unity')
+    if (topics.includes('tensorflow') || name.includes('tensor'))
+      stack.push('TensorFlow')
+    if (topics.includes('python') || repo.language === 'Python')
+      stack.push('Python')
+    if (topics.includes('javascript') || repo.language === 'JavaScript')
+      stack.push('JavaScript')
+    if (topics.includes('csharp') || repo.language === 'C#') stack.push('C#')
+    if (topics.includes('firebase') || name.includes('firebase'))
+      stack.push('Firebase')
+
+    return [...new Set(stack)]
   }
 
-  const isFeaturedProject = (repoName) => {
-    const featuredProjects = ['robocar', 'tensorflownbs', 'solarsystem', 'modelinterp']
-    return featuredProjects.includes(repoName.toLowerCase())
+  // Helper function to format date
+  const formatDate = dateString => {
+    return new Date(dateString).toLocaleDateString()
   }
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
-
-  const UnityEmbed = ({ project }) => {
-    const [isLoading, setIsLoading] = useState(true)
-
-    return (
-      <div className="unity-embed">
-        <div className="unity-header">
-          <h4>{project.name}</h4>
-          <p>{project.description}</p>
-        </div>
-        
-        {project.isPlayable ? (
-          <div className="unity-player">
-            {isLoading && (
-              <div className="unity-loading">
-                <Play size={48} />
-                <p>Loading Unity WebGL...</p>
-              </div>
-            )}
-            <iframe
-              src={project.embedUrl}
-              width="100%"
-              height="600"
-              onLoad={() => setIsLoading(false)}
-              style={{ display: isLoading ? 'none' : 'block' }}
-            />
-          </div>
-        ) : (
-          <div className="unity-placeholder">
-            <div className="unity-placeholder-content">
-              <Play size={48} />
-              <h4>Unity WebGL Build</h4>
-              <p>This Unity project can be embedded here once built for WebGL</p>
-              <a 
-                href={`https://github.com/adamwickenden/${project.repository}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="view-source-btn"
-              >
-                <Github size={20} />
-                View Source Code
-              </a>
-            </div>
-          </div>
-        )}
+  // Unity Project Component
+  const UnityProject = ({ project }) => (
+    <div className="unity-embed">
+      <div className="unity-header">
+        <h4>{project.name}</h4>
+        <p>{project.description}</p>
       </div>
-    )
+      {project.isPlayable ? (
+        <div className="unity-canvas">
+          <iframe
+            src={project.embedUrl}
+            width="100%"
+            height="400"
+            title={project.name}
+          />
+        </div>
+      ) : (
+        <div className="unity-placeholder">
+          <div className="unity-placeholder-content">
+            <Play size={48} />
+            <h4>Unity WebGL Build</h4>
+            <p>This Unity project can be embedded here once built for WebGL</p>
+            <a
+              href={project.repository}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="view-source-btn"
+            >
+              <Github size={20} />
+              View Source Code
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
+  UnityProject.propTypes = {
+    project: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      description: PropTypes.string.isRequired,
+      isPlayable: PropTypes.bool,
+      embedUrl: PropTypes.string,
+      repository: PropTypes.string.isRequired,
+    }).isRequired,
   }
 
   if (loading) {
@@ -185,23 +194,30 @@ const Projects = () => {
       <div className="projects-container">
         <header className="projects-header">
           <h1>My Projects</h1>
-          <p>A collection of my software development projects, from machine learning to web applications and Unity games.</p>
+          <p>
+            A collection of my software development projects, from machine
+            learning to web applications and Unity games.
+          </p>
         </header>
 
         {/* Unity Projects Section */}
-        {unityProjects.length > 0 && (
-          <section className="unity-section">
-            <h2 className="section-title">
-              <Play size={24} />
-              Interactive Unity Projects
-            </h2>
-            <div className="unity-projects">
-              {unityProjects.map((project, index) => (
-                <UnityEmbed key={index} project={project} />
-              ))}
-            </div>
-          </section>
-        )}
+        <section className="unity-section">
+          <h2 className="section-title">
+            <Play size={24} />
+            Interactive Unity Projects
+          </h2>
+          <div className="unity-projects">
+            <UnityProject
+              project={{
+                name: 'Solar System',
+                description:
+                  'Interactive 3D solar system simulation built with Unity',
+                isPlayable: false,
+                repository: 'https://github.com/adamwickenden/solarsystem',
+              }}
+            />
+          </div>
+        </section>
 
         {/* GitHub Repositories Section */}
         <section className="repositories-section">
@@ -209,29 +225,22 @@ const Projects = () => {
             <Github size={24} />
             GitHub Repositories
           </h2>
-          
           <div className="repositories-grid">
-            {repositories.map((repo) => (
-              <div key={repo.id} className={`repository-card ${repo.featured ? 'featured' : ''}`}>
-                {repo.featured && <div className="featured-badge">Featured</div>}
-                
+            {repositories.map(repo => (
+              <div
+                key={repo.id}
+                className={`repository-card ${repo.featured ? 'featured' : ''}`}
+              >
+                {repo.featured && (
+                  <div className="featured-badge">Featured</div>
+                )}
                 <div className="repo-header">
                   <h3 className="repo-name">{repo.name}</h3>
-                  <span className="project-type">{repo.project_type}</span>
+                  <span className="repo-type">{repo.type}</span>
                 </div>
-
                 <p className="repo-description">
                   {repo.description || 'No description available'}
                 </p>
-
-                {repo.tech_stack.length > 0 && (
-                  <div className="tech-stack">
-                    {repo.tech_stack.map((tech, index) => (
-                      <span key={index} className="tech-tag">{tech}</span>
-                    ))}
-                  </div>
-                )}
-
                 <div className="repo-stats">
                   <div className="stat">
                     <Star size={16} />
@@ -246,9 +255,15 @@ const Projects = () => {
                     <span>{repo.watchers_count}</span>
                   </div>
                 </div>
-
+                <div className="repo-tech">
+                  {repo.techStack.map((tech, index) => (
+                    <span key={index} className="tech-tag">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
                 <div className="repo-footer">
-                  <span className="updated-date">
+                  <span className="repo-updated">
                     Updated {formatDate(repo.updated_at)}
                   </span>
                   <a
@@ -257,7 +272,7 @@ const Projects = () => {
                     rel="noopener noreferrer"
                     className="repo-link"
                   >
-                    <ExternalLink size={16} />
+                    <Github size={16} />
                     View on GitHub
                   </a>
                 </div>
@@ -270,4 +285,4 @@ const Projects = () => {
   )
 }
 
-export default Projects 
+export default Projects

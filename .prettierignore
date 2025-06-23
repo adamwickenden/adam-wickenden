@@ -1,0 +1,9 @@
+dist/
+node_modules/
+coverage/
+build/
+*.min.js
+*.min.css
+.firebase/
+public/unity/
+package-lock.json 

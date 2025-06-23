@@ -66,8 +66,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-message {
@@ -338,29 +342,29 @@
   .projects-container {
     padding: 0 1rem;
   }
-  
+
   .projects-header h1 {
     font-size: 2.5rem;
   }
-  
+
   .repositories-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .repository-card {
     padding: 1rem;
   }
-  
+
   .repo-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .project-type {
     align-self: flex-start;
   }
-  
+
   .repo-footer {
     flex-direction: column;
     align-items: flex-start;
@@ -372,14 +376,14 @@
   .projects-header h1 {
     font-size: 2rem;
   }
-  
+
   .unity-loading,
   .unity-placeholder {
     height: 300px;
   }
-  
+
   .repositories-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-} 
+}
