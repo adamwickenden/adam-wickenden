@@ -69,8 +69,20 @@ describe('Projects Component', () => {
   })
 
   it('renders projects after successful API call', async () => {
-    // Mock successful API response
-    mockedAxios.get.mockResolvedValue({ data: mockRepos })
+    // Mock successful API response for repos and commits
+    mockedAxios.get
+      .mockResolvedValueOnce({ data: mockRepos })
+      .mockResolvedValue({
+        data: [
+          {
+            commit: {
+              author: {
+                date: '2023-03-10T10:00:00Z',
+              },
+            },
+          },
+        ],
+      })
 
     render(<Projects />)
 
@@ -103,7 +115,19 @@ describe('Projects Component', () => {
   })
 
   it('displays repository information correctly', async () => {
-    mockedAxios.get.mockResolvedValue({ data: mockRepos })
+    mockedAxios.get
+      .mockResolvedValueOnce({ data: mockRepos })
+      .mockResolvedValue({
+        data: [
+          {
+            commit: {
+              author: {
+                date: '2023-03-10T10:00:00Z',
+              },
+            },
+          },
+        ],
+      })
 
     render(<Projects />)
 
@@ -125,7 +149,19 @@ describe('Projects Component', () => {
   })
 
   it('renders Unity projects section correctly', async () => {
-    mockedAxios.get.mockResolvedValue({ data: mockRepos })
+    mockedAxios.get
+      .mockResolvedValueOnce({ data: mockRepos })
+      .mockResolvedValue({
+        data: [
+          {
+            commit: {
+              author: {
+                date: '2023-03-10T10:00:00Z',
+              },
+            },
+          },
+        ],
+      })
 
     render(<Projects />)
 
@@ -143,7 +179,19 @@ describe('Projects Component', () => {
   })
 
   it('renders Machine Learning projects section correctly', async () => {
-    mockedAxios.get.mockResolvedValue({ data: mockRepos })
+    mockedAxios.get
+      .mockResolvedValueOnce({ data: mockRepos })
+      .mockResolvedValue({
+        data: [
+          {
+            commit: {
+              author: {
+                date: '2023-03-10T10:00:00Z',
+              },
+            },
+          },
+        ],
+      })
 
     render(<Projects />)
 
@@ -159,7 +207,19 @@ describe('Projects Component', () => {
   })
 
   it('renders Frontend projects section correctly', async () => {
-    mockedAxios.get.mockResolvedValue({ data: mockRepos })
+    mockedAxios.get
+      .mockResolvedValueOnce({ data: mockRepos })
+      .mockResolvedValue({
+        data: [
+          {
+            commit: {
+              author: {
+                date: '2023-03-10T10:00:00Z',
+              },
+            },
+          },
+        ],
+      })
 
     render(<Projects />)
 
@@ -195,7 +255,19 @@ describe('Projects Component', () => {
       },
     ]
 
-    mockedAxios.get.mockResolvedValue({ data: reposWithPrivateAndFork })
+    mockedAxios.get
+      .mockResolvedValueOnce({ data: reposWithPrivateAndFork })
+      .mockResolvedValue({
+        data: [
+          {
+            commit: {
+              author: {
+                date: '2023-03-10T10:00:00Z',
+              },
+            },
+          },
+        ],
+      })
 
     render(<Projects />)
 
@@ -213,7 +285,19 @@ describe('Projects Component', () => {
     const reposWithoutUnity = mockRepos.filter(
       repo => !repo.topics.includes('unity')
     )
-    mockedAxios.get.mockResolvedValue({ data: reposWithoutUnity })
+    mockedAxios.get
+      .mockResolvedValueOnce({ data: reposWithoutUnity })
+      .mockResolvedValue({
+        data: [
+          {
+            commit: {
+              author: {
+                date: '2023-03-10T10:00:00Z',
+              },
+            },
+          },
+        ],
+      })
 
     render(<Projects />)
 
@@ -229,7 +313,19 @@ describe('Projects Component', () => {
   })
 
   it('has external links with proper attributes', async () => {
-    mockedAxios.get.mockResolvedValue({ data: mockRepos })
+    mockedAxios.get
+      .mockResolvedValueOnce({ data: mockRepos })
+      .mockResolvedValue({
+        data: [
+          {
+            commit: {
+              author: {
+                date: '2023-03-10T10:00:00Z',
+              },
+            },
+          },
+        ],
+      })
 
     render(<Projects />)
 
@@ -244,8 +340,21 @@ describe('Projects Component', () => {
     })
   })
 
-  it('sorts repositories by updated date', async () => {
-    mockedAxios.get.mockResolvedValue({ data: mockRepos })
+  it('displays last commit date instead of updated date', async () => {
+    // Mock the initial API call and all subsequent commit calls
+    mockedAxios.get
+      .mockResolvedValueOnce({ data: mockRepos })
+      .mockResolvedValue({
+        data: [
+          {
+            commit: {
+              author: {
+                date: '2023-03-10T10:00:00Z',
+              },
+            },
+          },
+        ],
+      })
 
     render(<Projects />)
 
@@ -253,9 +362,12 @@ describe('Projects Component', () => {
       expect(screen.getByText('My Projects')).toBeInTheDocument()
     })
 
-    // The most recently updated should be portfolio-website (2023-03-10)
-    // followed by TensorFlowNBs (2023-02-20), then robocar (2023-01-15)
-    const repoCards = screen.getAllByText(/Updated \d+\/\d+\/\d+/)
-    expect(repoCards.length).toBeGreaterThan(0)
+    // Wait for async operations to complete and check that "Last commit" text appears
+    await waitFor(() => {
+      // Check that text contains "Last commit" instead of "Updated"
+      // Use getAllByText since there are multiple instances (Unity and repository cards)
+      const commitTexts = screen.getAllByText(/Last commit/)
+      expect(commitTexts.length).toBeGreaterThan(0)
+    }, { timeout: 3000 })
   })
 })

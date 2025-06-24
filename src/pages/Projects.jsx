@@ -24,14 +24,46 @@ const Projects = () => {
 
       const repos = response.data
         .filter(repo => !repo.private && !repo.fork)
-        .map(repo => ({
-          ...repo,
-          type: getProjectType(repo),
-          techStack: getTechStack(repo),
-        }))
-        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
 
-      setRepositories(repos)
+      // Fetch last commit date for each repository
+      const reposWithCommitDates = await Promise.all(
+        repos.map(async repo => {
+          try {
+            const commitsResponse = await axios.get(
+              `https://api.github.com/repos/${repo.owner.login}/${repo.name}/commits`,
+              {
+                params: {
+                  per_page: 1,
+                },
+              }
+            )
+            
+            const lastCommitDate = commitsResponse.data[0]?.commit?.author?.date || repo.pushed_at
+            
+            return {
+              ...repo,
+              type: getProjectType(repo),
+              techStack: getTechStack(repo),
+              last_commit_date: lastCommitDate,
+            }
+          } catch (error) {
+            // If we can't fetch commits, fallback to pushed_at
+            return {
+              ...repo,
+              type: getProjectType(repo),
+              techStack: getTechStack(repo),
+              last_commit_date: repo.pushed_at,
+            }
+          }
+        })
+      )
+
+      // Sort by last commit date (most recent first)
+      const sortedRepos = reposWithCommitDates.sort(
+        (a, b) => new Date(b.last_commit_date) - new Date(a.last_commit_date)
+      )
+
+      setRepositories(sortedRepos)
       setError(null)
     } catch (err) {
       console.error('Error fetching repositories:', err)
@@ -166,7 +198,7 @@ const Projects = () => {
                 <span>{currentProject.forks_count}</span>
               </div>
               <div className="stat">
-                <span>Updated {formatDate(currentProject.updated_at)}</span>
+                <span>Last commit {formatDate(currentProject.last_commit_date)}</span>
               </div>
             </div>
             <a
@@ -194,7 +226,7 @@ const Projects = () => {
         techStack: PropTypes.arrayOf(PropTypes.string).isRequired,
         stargazers_count: PropTypes.number.isRequired,
         forks_count: PropTypes.number.isRequired,
-        updated_at: PropTypes.string.isRequired,
+        last_commit_date: PropTypes.string.isRequired,
       })
     ).isRequired,
     activeIndex: PropTypes.number.isRequired,
@@ -234,7 +266,7 @@ const Projects = () => {
       </div>
       <div className="repo-footer">
         <span className="repo-updated">
-          Updated {formatDate(repo.updated_at)}
+          Last commit {formatDate(repo.last_commit_date)}
         </span>
         <a
           href={repo.html_url}
@@ -260,7 +292,7 @@ const Projects = () => {
       forks_count: PropTypes.number.isRequired,
       watchers_count: PropTypes.number.isRequired,
       techStack: PropTypes.arrayOf(PropTypes.string).isRequired,
-      updated_at: PropTypes.string.isRequired,
+      last_commit_date: PropTypes.string.isRequired,
       html_url: PropTypes.string.isRequired,
     }).isRequired,
   }
