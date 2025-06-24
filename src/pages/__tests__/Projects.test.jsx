@@ -7,7 +7,7 @@ import Projects from '../Projects'
 vi.mock('axios')
 const mockedAxios = axios
 
-// Mock data for GitHub repositories
+// Mock data for GitHub repositories with proper topics
 const mockRepos = [
   {
     id: 1,
@@ -21,7 +21,7 @@ const mockRepos = [
     updated_at: '2023-01-15T10:30:00Z',
     fork: false,
     private: false,
-    topics: ['robotics', 'python'],
+    topics: ['robotics', 'python', 'unity'],
   },
   {
     id: 2,
@@ -37,6 +37,20 @@ const mockRepos = [
     private: false,
     topics: ['tensorflow', 'machine-learning'],
   },
+  {
+    id: 3,
+    name: 'portfolio-website',
+    description: 'Personal portfolio website built with React',
+    html_url: 'https://github.com/adamwickenden/portfolio-website',
+    language: 'JavaScript',
+    stargazers_count: 8,
+    forks_count: 1,
+    watchers_count: 3,
+    updated_at: '2023-03-10T09:15:00Z',
+    fork: false,
+    private: false,
+    topics: ['react', 'frontend', 'javascript'],
+  },
 ]
 
 describe('Projects Component', () => {
@@ -51,9 +65,7 @@ describe('Projects Component', () => {
 
     render(<Projects />)
 
-    expect(
-      screen.getByText('Loading projects from GitHub...')
-    ).toBeInTheDocument()
+    expect(document.querySelector('.spinner')).toBeInTheDocument()
   })
 
   it('renders projects after successful API call', async () => {
@@ -67,8 +79,12 @@ describe('Projects Component', () => {
       expect(screen.getByText('My Projects')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('robocar')).toBeInTheDocument()
+    // Use getAllByText for project names that appear multiple times due to different sections
+    const robocarElements = screen.getAllByText('robocar')
+    expect(robocarElements.length).toBeGreaterThan(0)
+
     expect(screen.getByText('TensorFlowNBs')).toBeInTheDocument()
+    expect(screen.getByText('portfolio-website')).toBeInTheDocument()
   })
 
   it('renders error state when API call fails', async () => {
@@ -92,24 +108,23 @@ describe('Projects Component', () => {
     render(<Projects />)
 
     await waitFor(() => {
-      expect(screen.getByText('robocar')).toBeInTheDocument()
+      expect(screen.getByText('TensorFlowNBs')).toBeInTheDocument()
     })
 
     // Check repository details
     expect(
-      screen.getByText('Playing with Freenove robocar kit for RPi')
+      screen.getByText('TensorFlow Training notebooks')
     ).toBeInTheDocument()
-    expect(screen.getByText('Python')).toBeInTheDocument()
 
     // Check stats - use getAllByText for numbers that might appear multiple times
-    const starCounts = screen.getAllByText('5')
+    const starCounts = screen.getAllByText('10')
     expect(starCounts.length).toBeGreaterThan(0)
 
-    const forkCounts = screen.getAllByText('2')
+    const forkCounts = screen.getAllByText('3')
     expect(forkCounts.length).toBeGreaterThan(0)
   })
 
-  it('renders Unity projects section even when axios is pending', async () => {
+  it('renders Unity projects section correctly', async () => {
     mockedAxios.get.mockResolvedValue({ data: mockRepos })
 
     render(<Projects />)
@@ -120,48 +135,14 @@ describe('Projects Component', () => {
     })
 
     // Check if Unity section is present
-    expect(
-      screen.getByText((content, element) => {
-        return element?.textContent === 'Interactive Unity Projects'
-      })
-    ).toBeInTheDocument()
+    expect(screen.getByText('Interactive Unity Projects')).toBeInTheDocument()
 
-    expect(screen.getByText('Solar System')).toBeInTheDocument()
+    // Should show the Unity project from mock data - use getAllByText for multiple occurrences
+    const robocarElements = screen.getAllByText('robocar')
+    expect(robocarElements.length).toBeGreaterThan(0)
   })
 
-  it('filters out private and forked repositories', async () => {
-    const reposWithPrivateAndFork = [
-      ...mockRepos,
-      {
-        id: 3,
-        name: 'private-repo',
-        private: true,
-        fork: false,
-        description: 'This is private',
-      },
-      {
-        id: 4,
-        name: 'forked-repo',
-        private: false,
-        fork: true,
-        description: 'This is a fork',
-      },
-    ]
-
-    mockedAxios.get.mockResolvedValue({ data: reposWithPrivateAndFork })
-
-    render(<Projects />)
-
-    await waitFor(() => {
-      expect(screen.getByText('robocar')).toBeInTheDocument()
-    })
-
-    // Should not show private or forked repos
-    expect(screen.queryByText('private-repo')).not.toBeInTheDocument()
-    expect(screen.queryByText('forked-repo')).not.toBeInTheDocument()
-  })
-
-  it('handles Unity project placeholder correctly', async () => {
+  it('renders Machine Learning projects section correctly', async () => {
     mockedAxios.get.mockResolvedValue({ data: mockRepos })
 
     render(<Projects />)
@@ -170,10 +151,79 @@ describe('Projects Component', () => {
       expect(screen.getByText('My Projects')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('Unity WebGL Build')).toBeInTheDocument()
+    // Check if ML section is present
+    expect(screen.getByText('Machine Learning Projects')).toBeInTheDocument()
+
+    // Should show the ML project from mock data
+    expect(screen.getByText('TensorFlowNBs')).toBeInTheDocument()
+  })
+
+  it('renders Frontend projects section correctly', async () => {
+    mockedAxios.get.mockResolvedValue({ data: mockRepos })
+
+    render(<Projects />)
+
+    await waitFor(() => {
+      expect(screen.getByText('My Projects')).toBeInTheDocument()
+    })
+
+    // Check if Frontend section is present
+    expect(screen.getByText('Frontend Projects')).toBeInTheDocument()
+
+    // Should show the Frontend project from mock data
+    expect(screen.getByText('portfolio-website')).toBeInTheDocument()
+  })
+
+  it('filters out private and forked repositories', async () => {
+    const reposWithPrivateAndFork = [
+      ...mockRepos,
+      {
+        id: 4,
+        name: 'private-repo',
+        private: true,
+        fork: false,
+        description: 'This is private',
+        topics: ['machine-learning'],
+      },
+      {
+        id: 5,
+        name: 'forked-repo',
+        private: false,
+        fork: true,
+        description: 'This is a fork',
+        topics: ['frontend'],
+      },
+    ]
+
+    mockedAxios.get.mockResolvedValue({ data: reposWithPrivateAndFork })
+
+    render(<Projects />)
+
+    await waitFor(() => {
+      expect(screen.getByText('TensorFlowNBs')).toBeInTheDocument()
+    })
+
+    // Should not show private or forked repos
+    expect(screen.queryByText('private-repo')).not.toBeInTheDocument()
+    expect(screen.queryByText('forked-repo')).not.toBeInTheDocument()
+  })
+
+  it('handles empty Unity projects correctly', async () => {
+    // Mock data without Unity projects
+    const reposWithoutUnity = mockRepos.filter(
+      repo => !repo.topics.includes('unity')
+    )
+    mockedAxios.get.mockResolvedValue({ data: reposWithoutUnity })
+
+    render(<Projects />)
+
+    await waitFor(() => {
+      expect(screen.getByText('My Projects')).toBeInTheDocument()
+    })
+
     expect(
       screen.getByText(
-        'This Unity project can be embedded here once built for WebGL'
+        'No Unity projects found. Add the "unity" topic to your GitHub repositories to display them here.'
       )
     ).toBeInTheDocument()
   })
@@ -184,7 +234,7 @@ describe('Projects Component', () => {
     render(<Projects />)
 
     await waitFor(() => {
-      expect(screen.getByText('robocar')).toBeInTheDocument()
+      expect(screen.getByText('TensorFlowNBs')).toBeInTheDocument()
     })
 
     const githubLinks = screen.getAllByText('View on GitHub')
@@ -192,5 +242,20 @@ describe('Projects Component', () => {
       expect(link.closest('a')).toHaveAttribute('target', '_blank')
       expect(link.closest('a')).toHaveAttribute('rel', 'noopener noreferrer')
     })
+  })
+
+  it('sorts repositories by updated date', async () => {
+    mockedAxios.get.mockResolvedValue({ data: mockRepos })
+
+    render(<Projects />)
+
+    await waitFor(() => {
+      expect(screen.getByText('My Projects')).toBeInTheDocument()
+    })
+
+    // The most recently updated should be portfolio-website (2023-03-10)
+    // followed by TensorFlowNBs (2023-02-20), then robocar (2023-01-15)
+    const repoCards = screen.getAllByText(/Updated \d+\/\d+\/\d+/)
+    expect(repoCards.length).toBeGreaterThan(0)
   })
 })

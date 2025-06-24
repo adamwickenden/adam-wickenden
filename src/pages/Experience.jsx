@@ -7,100 +7,58 @@ import {
   MapPin,
   ExternalLink,
   Award,
-  Code,
+  Loader,
 } from 'lucide-react'
+import cvService from '../services/cvService'
 import './Experience.css'
 
 const Experience = () => {
-  const [experienceData, _setExperienceData] = useState({
-    workExperience: [
-      {
-        title: 'Software Developer',
-        company: 'Technology Solutions Ltd',
-        duration: '2023 - Present',
-        type: 'Full-time',
-        location: 'United Kingdom',
-        description:
-          'Developing innovative software solutions and machine learning applications.',
-        achievements: [
-          'Developed machine learning models using TensorFlow and Python',
-          'Built responsive web applications using React and Node.js',
-          'Collaborated with cross-functional teams on multiple projects',
-          'Implemented CI/CD pipelines and automated testing frameworks',
-        ],
-        technologies: [
-          'Python',
-          'React',
-          'Node.js',
-          'TensorFlow',
-          'AWS',
-          'Docker',
-        ],
-      },
-      {
-        title: 'Junior Software Developer',
-        company: 'Tech Innovations Inc',
-        duration: '2022 - 2023',
-        type: 'Full-time',
-        location: 'United Kingdom',
-        description:
-          'Contributed to various software development projects and gained experience in full-stack development.',
-        achievements: [
-          'Assisted in developing web applications using modern frameworks',
-          'Participated in code reviews and agile development processes',
-          'Gained experience in database design and optimization',
-        ],
-        technologies: ['JavaScript', 'React', 'Python', 'SQL', 'Git'],
-      },
-    ],
-    education: [
-      {
-        degree: 'Bachelor of Science in Computer Science',
-        institution: 'University of Technology',
-        duration: '2019 - 2022',
-        location: 'United Kingdom',
-        grade: 'First Class Honours',
-        modules: [
-          'Artificial Intelligence & Machine Learning',
-          'Software Engineering',
-          'Data Structures & Algorithms',
-          'Computer Graphics',
-          'Database Systems',
-        ],
-      },
-    ],
-    certifications: [
-      {
-        title: 'TensorFlow Developer Certificate',
-        issuer: 'Google',
-        date: '2023',
-        credentialId: 'TF-2023-001',
-      },
-      {
-        title: 'AWS Certified Cloud Practitioner',
-        issuer: 'Amazon Web Services',
-        date: '2023',
-        credentialId: 'AWS-CCP-2023',
-      },
-    ],
-    skills: {
-      programmingLanguages: ['Python', 'JavaScript', 'C#', 'SQL', 'HTML/CSS'],
-      frameworks: ['React', 'Node.js', 'TensorFlow', 'Unity', 'Express.js'],
-      tools: ['Git', 'Docker', 'AWS', 'Firebase', 'MongoDB', 'PostgreSQL'],
-      softSkills: [
-        'Problem Solving',
-        'Team Collaboration',
-        'Project Management',
-        'Communication',
-      ],
-    },
-  })
+  const [experienceData, setExperienceData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // In a real application, you would fetch data from LinkedIn API or your backend
-    // For now, we're using static data
-    // setExperienceData(fetchedData)
+    const fetchCVData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Fetch all CV data
+        const cvData = await cvService.fetchProfile()
+
+        // Transform the data to match our component structure
+        setExperienceData({
+          workExperience: cvData.workExperience,
+          education: cvData.education,
+          certifications: cvData.certifications,
+          skills: cvData.skills,
+        })
+      } catch (err) {
+        console.error('Error fetching CV data:', err)
+        setError('Failed to load experience data. Please try again later.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCVData()
   }, [])
+
+  // Helper function to format certification dates
+  const formatCertificationDate = dateString => {
+    if (!dateString) return 'No expiration'
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+    })
+  }
+
+  // Helper function to check if certification is expired
+  const isCertificationExpired = expirationDate => {
+    if (!expirationDate) return false
+    return new Date(expirationDate) < new Date()
+  }
 
   // Timeline item component
   const TimelineItem = ({ item, type }) => (
@@ -123,6 +81,7 @@ const Experience = () => {
           </span>
           {item.type && <span className="job-type">{item.type}</span>}
           {item.grade && <span className="grade">{item.grade}</span>}
+          {item.gpa && <span className="gpa">GPA: {item.gpa}</span>}
         </div>
         <div className="timeline-location">
           <MapPin size={16} />
@@ -151,18 +110,6 @@ const Experience = () => {
             </div>
           </div>
         )}
-        {item.technologies && (
-          <div className="technologies">
-            <h4>Technologies:</h4>
-            <div className="tech-tags">
-              {item.technologies.map((tech, index) => (
-                <span key={index} className="tech-tag">
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
@@ -178,11 +125,51 @@ const Experience = () => {
       location: PropTypes.string.isRequired,
       description: PropTypes.string.isRequired,
       grade: PropTypes.string,
+      gpa: PropTypes.string,
       achievements: PropTypes.arrayOf(PropTypes.string),
       modules: PropTypes.arrayOf(PropTypes.string),
-      technologies: PropTypes.arrayOf(PropTypes.string),
     }).isRequired,
     type: PropTypes.oneOf(['work', 'education']).isRequired,
+  }
+
+  if (loading) {
+    return (
+      <div className="experience">
+        <div className="experience-container">
+          <div className="loading-container">
+            <Loader className="loading-spinner" size={48} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="experience">
+        <div className="experience-container">
+          <div className="error-container">
+            <p className="error-message">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="retry-button"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!experienceData) {
+    return (
+      <div className="experience">
+        <div className="experience-container">
+          <p>No experience data available.</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -207,6 +194,7 @@ const Experience = () => {
           </div>
         </header>
 
+        {/* Work Experience Section */}
         <section className="experience-section">
           <h2 className="section-title">
             <Briefcase size={24} />
@@ -219,6 +207,7 @@ const Experience = () => {
           </div>
         </section>
 
+        {/* Education Section */}
         <section className="experience-section">
           <h2 className="section-title">
             <GraduationCap size={24} />
@@ -231,6 +220,7 @@ const Experience = () => {
           </div>
         </section>
 
+        {/* Certifications Section */}
         <section className="experience-section">
           <h2 className="section-title">
             <Award size={24} />
@@ -239,62 +229,52 @@ const Experience = () => {
           <div className="certifications-grid">
             {experienceData.certifications.map((cert, index) => (
               <div key={index} className="certification-card">
-                <h3>{cert.title}</h3>
-                <p className="cert-issuer">Issued by {cert.issuer}</p>
-                <span className="cert-date">{cert.date}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="experience-section">
-          <h2 className="section-title">
-            <Code size={24} />
-            Skills & Technologies
-          </h2>
-          <div className="skills-categories">
-            <div className="skill-category">
-              <h3>Programming Languages</h3>
-              <div className="skill-tags">
-                {experienceData.skills.programmingLanguages.map(
-                  (skill, index) => (
-                    <span key={index} className="skill-tag">
-                      {skill}
-                    </span>
-                  )
+                <div className="certification-header">
+                  <h3 className="certification-title">{cert.title}</h3>
+                  <span className="certification-issuer">
+                    Issued by {cert.issuer}
+                  </span>
+                </div>
+                <div className="certification-details">
+                  <p className="certification-date">
+                    Issued: {formatCertificationDate(cert.issueDate)}
+                  </p>
+                  {cert.expirationDate && (
+                    <p
+                      className={`certification-expiry ${isCertificationExpired(cert.expirationDate) ? 'expired' : ''}`}
+                    >
+                      {isCertificationExpired(cert.expirationDate)
+                        ? 'Expired: '
+                        : 'Expires: '}
+                      {formatCertificationDate(cert.expirationDate)}
+                    </p>
+                  )}
+                  {cert.credentialId && (
+                    <p className="credential-id">
+                      Credential ID: {cert.credentialId}
+                    </p>
+                  )}
+                  {cert.description && (
+                    <p className="certification-description">
+                      {cert.description}
+                    </p>
+                  )}
+                </div>
+                {cert.credentialUrl && (
+                  <div className="certification-actions">
+                    <a
+                      href={cert.credentialUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="certification-link"
+                    >
+                      <ExternalLink size={16} />
+                      View Credential
+                    </a>
+                  </div>
                 )}
               </div>
-            </div>
-            <div className="skill-category">
-              <h3>Frameworks & Libraries</h3>
-              <div className="skill-tags">
-                {experienceData.skills.frameworks.map((skill, index) => (
-                  <span key={index} className="skill-tag">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="skill-category">
-              <h3>Tools & Technologies</h3>
-              <div className="skill-tags">
-                {experienceData.skills.tools.map((skill, index) => (
-                  <span key={index} className="skill-tag">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="skill-category">
-              <h3>Soft Skills</h3>
-              <div className="skill-tags">
-                {experienceData.skills.softSkills.map((skill, index) => (
-                  <span key={index} className="skill-tag">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </section>
       </div>

@@ -8,6 +8,7 @@ const Projects = () => {
   const [repositories, setRepositories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [activeUnityProject, setActiveUnityProject] = useState(0)
 
   const fetchGitHubRepositories = useCallback(async () => {
     try {
@@ -25,15 +26,10 @@ const Projects = () => {
         .filter(repo => !repo.private && !repo.fork)
         .map(repo => ({
           ...repo,
-          featured: isFeaturedProject(repo.name),
           type: getProjectType(repo.name),
           techStack: getTechStack(repo),
         }))
-        .sort((a, b) => {
-          if (a.featured && !b.featured) return -1
-          if (!a.featured && b.featured) return 1
-          return new Date(b.updated_at) - new Date(a.updated_at)
-        })
+        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
 
       setRepositories(repos)
       setError(null)
@@ -48,17 +44,6 @@ const Projects = () => {
   useEffect(() => {
     fetchGitHubRepositories()
   }, [fetchGitHubRepositories])
-
-  // Helper function to determine if a project is featured
-  const isFeaturedProject = repoName => {
-    const featuredProjects = [
-      'robocar',
-      'tensorflownbs',
-      'solarsystem',
-      'modelinterp',
-    ]
-    return featuredProjects.includes(repoName.toLowerCase())
-  }
 
   // Helper function to categorize projects
   const getProjectType = repoName => {
@@ -114,50 +99,184 @@ const Projects = () => {
     return new Date(dateString).toLocaleDateString()
   }
 
-  // Unity Project Component
-  const UnityProject = ({ project }) => (
-    <div className="unity-embed">
-      <div className="unity-header">
-        <h4>{project.name}</h4>
-        <p>{project.description}</p>
-      </div>
-      {project.isPlayable ? (
-        <div className="unity-canvas">
-          <iframe
-            src={project.embedUrl}
-            width="100%"
-            height="400"
-            title={project.name}
-          />
+  // Filter functions for different sections
+  const getUnityProjects = () => {
+    return repositories.filter(
+      repo => repo.topics && repo.topics.includes('unity')
+    )
+  }
+
+  const getMachineLearningProjects = () => {
+    return repositories.filter(
+      repo => repo.topics && repo.topics.includes('machine-learning')
+    )
+  }
+
+  const getFrontendProjects = () => {
+    return repositories.filter(
+      repo => repo.topics && repo.topics.includes('frontend')
+    )
+  }
+
+  // Unity Project Component with Navigation (for GitHub repositories)
+  const UnityProjectViewer = ({ projects, activeIndex, onProjectChange }) => {
+    if (!projects || projects.length === 0) {
+      return (
+        <div className="unity-embed">
+          <div className="unity-placeholder">
+            <div className="unity-placeholder-content">
+              <Play size={48} />
+              <h4>Unity Projects</h4>
+              <p>
+                No Unity projects found. Add the &quot;unity&quot; topic to your
+                GitHub repositories to display them here.
+              </p>
+            </div>
+          </div>
         </div>
-      ) : (
+      )
+    }
+
+    const currentProject = projects[activeIndex]
+
+    return (
+      <div className="unity-embed">
+        <div className="unity-header">
+          <h4>{currentProject.name}</h4>
+          <p>{currentProject.description || 'No description available'}</p>
+        </div>
+
+        {/* Project Navigation */}
+        <div className="unity-navigation">
+          {projects.map((project, index) => (
+            <button
+              key={project.id}
+              className={`unity-nav-btn ${index === activeIndex ? 'active' : ''}`}
+              onClick={() => onProjectChange(index)}
+            >
+              {project.name}
+            </button>
+          ))}
+        </div>
+
         <div className="unity-placeholder">
           <div className="unity-placeholder-content">
             <Play size={48} />
             <h4>Unity WebGL Build</h4>
             <p>This Unity project can be embedded here once built for WebGL</p>
+            <div className="unity-tech-stack">
+              {currentProject.techStack.map((tech, index) => (
+                <span key={index} className="tech-tag">
+                  {tech}
+                </span>
+              ))}
+            </div>
+            <div className="unity-stats">
+              <div className="stat">
+                <Star size={16} />
+                <span>{currentProject.stargazers_count}</span>
+              </div>
+              <div className="stat">
+                <GitFork size={16} />
+                <span>{currentProject.forks_count}</span>
+              </div>
+              <div className="stat">
+                <span>Updated {formatDate(currentProject.updated_at)}</span>
+              </div>
+            </div>
             <a
-              href={project.repository}
+              href={currentProject.html_url}
               target="_blank"
               rel="noopener noreferrer"
               className="view-source-btn"
             >
               <Github size={20} />
-              View Source Code
+              View on GitHub
             </a>
           </div>
         </div>
-      )}
+      </div>
+    )
+  }
+
+  UnityProjectViewer.propTypes = {
+    projects: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        name: PropTypes.string.isRequired,
+        description: PropTypes.string,
+        html_url: PropTypes.string.isRequired,
+        techStack: PropTypes.arrayOf(PropTypes.string).isRequired,
+        stargazers_count: PropTypes.number.isRequired,
+        forks_count: PropTypes.number.isRequired,
+        updated_at: PropTypes.string.isRequired,
+      })
+    ).isRequired,
+    activeIndex: PropTypes.number.isRequired,
+    onProjectChange: PropTypes.func.isRequired,
+  }
+
+  // Repository Card Component
+  const RepositoryCard = ({ repo }) => (
+    <div className="repository-card">
+      <div className="repo-header">
+        <h3 className="repo-name">{repo.name}</h3>
+        <span className="repo-type">{repo.type}</span>
+      </div>
+      <p className="repo-description">
+        {repo.description || 'No description available'}
+      </p>
+      <div className="repo-stats">
+        <div className="stat">
+          <Star size={16} />
+          <span>{repo.stargazers_count}</span>
+        </div>
+        <div className="stat">
+          <GitFork size={16} />
+          <span>{repo.forks_count}</span>
+        </div>
+        <div className="stat">
+          <Eye size={16} />
+          <span>{repo.watchers_count}</span>
+        </div>
+      </div>
+      <div className="repo-tech">
+        {repo.techStack.map((tech, index) => (
+          <span key={index} className="tech-tag">
+            {tech}
+          </span>
+        ))}
+      </div>
+      <div className="repo-footer">
+        <span className="repo-updated">
+          Updated {formatDate(repo.updated_at)}
+        </span>
+        <a
+          href={repo.html_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="repo-link"
+        >
+          <Github size={16} />
+          View on GitHub
+        </a>
+      </div>
     </div>
   )
 
-  UnityProject.propTypes = {
-    project: PropTypes.shape({
+  RepositoryCard.propTypes = {
+    repo: PropTypes.shape({
+      id: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
-      description: PropTypes.string.isRequired,
-      isPlayable: PropTypes.bool,
-      embedUrl: PropTypes.string,
-      repository: PropTypes.string.isRequired,
+      description: PropTypes.string,
+
+      type: PropTypes.string,
+      stargazers_count: PropTypes.number.isRequired,
+      forks_count: PropTypes.number.isRequired,
+      watchers_count: PropTypes.number.isRequired,
+      techStack: PropTypes.arrayOf(PropTypes.string).isRequired,
+      updated_at: PropTypes.string.isRequired,
+      html_url: PropTypes.string.isRequired,
     }).isRequired,
   }
 
@@ -167,7 +286,6 @@ const Projects = () => {
         <div className="projects-container">
           <div className="loading-spinner">
             <div className="spinner"></div>
-            <p>Loading projects from GitHub...</p>
           </div>
         </div>
       </div>
@@ -189,96 +307,82 @@ const Projects = () => {
     )
   }
 
+  const unityProjects = getUnityProjects()
+  const machineLearningProjects = getMachineLearningProjects()
+  const frontendProjects = getFrontendProjects()
+
   return (
     <div className="projects">
       <div className="projects-container">
         <header className="projects-header">
           <h1>My Projects</h1>
           <p>
-            A collection of my software development projects, from machine
-            learning to web applications and Unity games.
+            A collection of my software development projects, from Unity games
+            to machine learning and web applications.
           </p>
         </header>
 
-        {/* Unity Projects Section */}
+        {/* Interactive Unity Projects Section */}
         <section className="unity-section">
           <h2 className="section-title">
             <Play size={24} />
             Interactive Unity Projects
           </h2>
           <div className="unity-projects">
-            <UnityProject
-              project={{
-                name: 'Solar System',
-                description:
-                  'Interactive 3D solar system simulation built with Unity',
-                isPlayable: false,
-                repository: 'https://github.com/adamwickenden/solarsystem',
-              }}
+            <UnityProjectViewer
+              projects={unityProjects}
+              activeIndex={Math.min(
+                activeUnityProject,
+                Math.max(0, unityProjects.length - 1)
+              )}
+              onProjectChange={setActiveUnityProject}
             />
           </div>
         </section>
 
-        {/* GitHub Repositories Section */}
+        {/* Machine Learning Projects Section */}
         <section className="repositories-section">
           <h2 className="section-title">
             <Github size={24} />
-            GitHub Repositories
+            Machine Learning Projects
           </h2>
-          <div className="repositories-grid">
-            {repositories.map(repo => (
-              <div
-                key={repo.id}
-                className={`repository-card ${repo.featured ? 'featured' : ''}`}
-              >
-                {repo.featured && (
-                  <div className="featured-badge">Featured</div>
-                )}
-                <div className="repo-header">
-                  <h3 className="repo-name">{repo.name}</h3>
-                  <span className="repo-type">{repo.type}</span>
-                </div>
-                <p className="repo-description">
-                  {repo.description || 'No description available'}
-                </p>
-                <div className="repo-stats">
-                  <div className="stat">
-                    <Star size={16} />
-                    <span>{repo.stargazers_count}</span>
-                  </div>
-                  <div className="stat">
-                    <GitFork size={16} />
-                    <span>{repo.forks_count}</span>
-                  </div>
-                  <div className="stat">
-                    <Eye size={16} />
-                    <span>{repo.watchers_count}</span>
-                  </div>
-                </div>
-                <div className="repo-tech">
-                  {repo.techStack.map((tech, index) => (
-                    <span key={index} className="tech-tag">
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-                <div className="repo-footer">
-                  <span className="repo-updated">
-                    Updated {formatDate(repo.updated_at)}
-                  </span>
-                  <a
-                    href={repo.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="repo-link"
-                  >
-                    <Github size={16} />
-                    View on GitHub
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
+          {machineLearningProjects.length > 0 ? (
+            <div className="repositories-grid">
+              {machineLearningProjects.map(repo => (
+                <RepositoryCard key={repo.id} repo={repo} />
+              ))}
+            </div>
+          ) : (
+            <div className="no-projects-message">
+              <p>
+                No machine learning projects found. Add the
+                &quot;machine-learning&quot; topic to your GitHub repositories
+                to display them here.
+              </p>
+            </div>
+          )}
+        </section>
+
+        {/* Frontend Projects Section */}
+        <section className="repositories-section">
+          <h2 className="section-title">
+            <ExternalLink size={24} />
+            Frontend Projects
+          </h2>
+          {frontendProjects.length > 0 ? (
+            <div className="repositories-grid">
+              {frontendProjects.map(repo => (
+                <RepositoryCard key={repo.id} repo={repo} />
+              ))}
+            </div>
+          ) : (
+            <div className="no-projects-message">
+              <p>
+                No frontend projects found. Add the &quot;frontend&quot; topic
+                to your GitHub repositories to display them here.
+              </p>
+            </div>
+          )}
         </section>
       </div>
     </div>

@@ -1,19 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --primary-color: #667eea;
-  --primary-dark: #5a67d8;
-  --secondary-color: #764ba2;
-  --background-light: #f8fafc;
-  --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  --text-primary: #2d3748;
-  --text-secondary: #4a5568;
-  --text-muted: #718096;
-  --border-color: #e2e8f0;
-  --shadow-light: 0 10px 30px rgba(0, 0, 0, 0.1);
-  --shadow-medium: 0 15px 40px rgba(0, 0, 0, 0.15);
-  --border-radius: 15px;
-  --transition: all 0.3s ease;
+  /* Professional & Readable Color Palette */
+  --primary-color: #1e293b; /* dark slate for headings */
+  --primary-dark: #0f172a; /* darker slate */
+  --secondary-color: #475569; /* medium slate */
+  --accent-color: #3b82f6; /* professional blue */
+  --success-color: #059669; /* muted emerald */
+  --slate-color: #64748b;
+  --background-light: #ffffff; /* pure white */
+  --background-gradient: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  --text-primary: #0f172a; /* very dark for high contrast */
+  --text-secondary: #334155; /* darker gray for better readability */
+  --text-muted: #475569; /* medium gray, still readable */
+  --border-color: #e2e8f0; /* light gray border */
+  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1); /* subtle shadows */
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --border-radius: 8px; /* clean radius */
+  --transition: all 0.2s ease; /* smooth transitions */
 }
 
 * {

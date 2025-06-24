@@ -1,19 +1,87 @@
-import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
 import Experience from '../Experience'
 
+// Mock the CV service
+vi.mock('../../services/cvService', () => ({
+  default: {
+    fetchProfile: vi.fn().mockResolvedValue({
+      workExperience: [
+        {
+          title: 'Senior Data Scientist',
+          company: 'Faculty.ai',
+          startDate: '2021-11-01',
+          endDate: null,
+          duration: '2+ years',
+          location: 'London, UK',
+          achievements: [
+            'Led drone classification projects using transformer models',
+            'Developed signal processing algorithms for radar waveform analysis',
+          ],
+        },
+        {
+          title: 'Data Scientist/Software Engineer',
+          company: 'Accenture',
+          startDate: '2019-03-01',
+          endDate: '2021-11-01',
+          duration: '2 years 8 months',
+          location: 'London, UK',
+          achievements: [
+            'Built machine learning models for environmental research',
+            'Developed full-stack applications for client projects',
+          ],
+        },
+      ],
+      education: [
+        {
+          degree: 'MSci Physics',
+          institution: 'University of Birmingham',
+          startDate: '2014-09-01',
+          endDate: '2018-06-01',
+          duration: '4 years',
+          location: 'Birmingham, UK',
+          grade: '1st Class with Honours',
+        },
+      ],
+      certifications: [
+        {
+          title: 'Machine Learning Course',
+          issuer: 'Coursera - Stanford University (Andrew Ng)',
+          issueDate: '2021-02-01',
+          credentialId: 'ML-STANFORD-2021',
+        },
+      ],
+    }),
+  },
+}))
+
 describe('Experience Component', () => {
-  it('renders page header correctly', () => {
+  it('renders loading state initially', () => {
     render(<Experience />)
 
-    expect(screen.getByText('Professional Experience')).toBeInTheDocument()
+    expect(document.querySelector('.loading-spinner')).toBeInTheDocument()
+  })
+
+  it('renders page header correctly after loading', async () => {
+    render(<Experience />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Professional Experience')).toBeInTheDocument()
+    })
+
     expect(
-      screen.getByText(/my journey in software development/i)
+      screen.getByText(
+        /My journey in software development, education, and continuous learning/i
+      )
     ).toBeInTheDocument()
   })
 
-  it('renders CV download link', () => {
+  it('renders CV download link', async () => {
     render(<Experience />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Professional Experience')).toBeInTheDocument()
+    })
 
     const cvLink = screen.getByRole('link', { name: /view full cv/i })
     expect(cvLink).toHaveAttribute(
@@ -24,83 +92,69 @@ describe('Experience Component', () => {
     expect(cvLink).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
-  it('renders work experience section', () => {
+  it('renders work experience section', async () => {
     render(<Experience />)
 
-    expect(screen.getByText('Work Experience')).toBeInTheDocument()
-    expect(screen.getByText('Software Developer')).toBeInTheDocument()
-    expect(screen.getByText('Technology Solutions Ltd')).toBeInTheDocument()
-    expect(screen.getByText('2023 - Present')).toBeInTheDocument()
-  })
+    await waitFor(() => {
+      expect(screen.getByText('Work Experience')).toBeInTheDocument()
+    })
 
-  it('renders education section', () => {
-    render(<Experience />)
-
-    expect(screen.getByText('Education')).toBeInTheDocument()
+    expect(screen.getByText('Faculty.ai')).toBeInTheDocument()
+    expect(screen.getByText('Senior Data Scientist')).toBeInTheDocument()
+    // The component displays duration, not date range
+    // expect(screen.getByText('Nov 2021 - Present')).toBeInTheDocument()
+    expect(screen.getByText('Accenture')).toBeInTheDocument()
     expect(
-      screen.getByText('Bachelor of Science in Computer Science')
-    ).toBeInTheDocument()
-    expect(screen.getByText('University of Technology')).toBeInTheDocument()
-  })
-
-  it('renders certifications section', () => {
-    render(<Experience />)
-
-    expect(screen.getByText('Certifications')).toBeInTheDocument()
-    expect(
-      screen.getByText('TensorFlow Developer Certificate')
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText('AWS Certified Cloud Practitioner')
+      screen.getByText('Data Scientist/Software Engineer')
     ).toBeInTheDocument()
   })
 
-  it('renders skills section with categories', () => {
+  it('renders education section', async () => {
     render(<Experience />)
 
-    expect(screen.getByText('Skills & Technologies')).toBeInTheDocument()
-    expect(screen.getByText('Programming Languages')).toBeInTheDocument()
-    expect(screen.getByText('Frameworks & Libraries')).toBeInTheDocument()
-    expect(screen.getByText('Tools & Technologies')).toBeInTheDocument()
-    expect(screen.getByText('Soft Skills')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Education')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('University of Birmingham')).toBeInTheDocument()
+    expect(screen.getByText('MSci Physics')).toBeInTheDocument()
+    expect(screen.getByText('1st Class with Honours')).toBeInTheDocument()
   })
 
-  it('displays job achievements correctly', () => {
+  it('renders certifications section', async () => {
     render(<Experience />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Certifications')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('Machine Learning Course')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Coursera - Stanford University/)
+    ).toBeInTheDocument()
+  })
+
+  it('displays job achievements correctly', async () => {
+    render(<Experience />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Work Experience')).toBeInTheDocument()
+    })
 
     expect(
-      screen.getByText(/developed machine learning models/i)
+      screen.getByText(/Led drone classification projects/i)
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/built responsive web applications/i)
+      screen.getByText(/Built machine learning models/i)
     ).toBeInTheDocument()
   })
 
-  it('displays education modules', () => {
+  it('shows timeline markers for experience items', async () => {
     render(<Experience />)
 
-    expect(
-      screen.getByText('Artificial Intelligence & Machine Learning')
-    ).toBeInTheDocument()
-    expect(screen.getByText('Software Engineering')).toBeInTheDocument()
-  })
-
-  it('displays technology tags for jobs', () => {
-    render(<Experience />)
-
-    // Check for technology tags - use getAllByText for technologies that appear in multiple sections
-    const pythonElements = screen.getAllByText('Python')
-    expect(pythonElements.length).toBeGreaterThan(0)
-
-    const reactElements = screen.getAllByText('React')
-    expect(reactElements.length).toBeGreaterThan(0)
-
-    const tensorFlowElements = screen.getAllByText('TensorFlow')
-    expect(tensorFlowElements.length).toBeGreaterThan(0)
-  })
-
-  it('shows timeline markers for experience items', () => {
-    render(<Experience />)
+    await waitFor(() => {
+      expect(screen.getByText('Professional Experience')).toBeInTheDocument()
+    })
 
     // Check for timeline elements
     const timelineItems = document.querySelectorAll('.timeline-item')
@@ -110,69 +164,71 @@ describe('Experience Component', () => {
     expect(timelineMarkers.length).toBeGreaterThan(0)
   })
 
-  it('displays duration information', () => {
+  it('displays duration information', async () => {
     render(<Experience />)
 
-    expect(screen.getByText('2023 - Present')).toBeInTheDocument()
-    expect(screen.getByText('2022 - 2023')).toBeInTheDocument()
-    expect(screen.getByText('2019 - 2022')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('2+ years')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('2 years 8 months')).toBeInTheDocument()
+    expect(screen.getByText('4 years')).toBeInTheDocument()
   })
 
-  it('shows location information', () => {
+  it('shows location information', async () => {
     render(<Experience />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Professional Experience')).toBeInTheDocument()
+    })
 
     // Use getAllByText for locations that appear multiple times
-    const ukLocations = screen.getAllByText('United Kingdom')
-    expect(ukLocations.length).toBeGreaterThan(0)
+    const londonLocations = screen.getAllByText('London, UK')
+    expect(londonLocations.length).toBeGreaterThan(0)
   })
 
-  it('renders certification details correctly', () => {
+  it('renders certification details correctly', async () => {
     render(<Experience />)
 
-    expect(screen.getByText('Issued by Google')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Certifications')).toBeInTheDocument()
+    })
+
     expect(
-      screen.getByText('Issued by Amazon Web Services')
+      screen.getByText(/Coursera - Stanford University/)
     ).toBeInTheDocument()
-    // Use getAllByText for dates that appear multiple times
-    const dates2023 = screen.getAllByText('2023')
-    expect(dates2023.length).toBeGreaterThan(0)
+    expect(screen.getByText(/Issued: February 2021/)).toBeInTheDocument()
   })
 
-  it('has proper semantic structure with headings', () => {
+  it('has proper semantic structure with headings', async () => {
     render(<Experience />)
 
-    // Check for proper heading hierarchy
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
+    })
+
     const h2Headings = screen.getAllByRole('heading', { level: 2 })
     expect(h2Headings.length).toBeGreaterThan(0)
   })
 
-  it('renders skill categories with multiple skills', () => {
+  it('handles CV service error gracefully', async () => {
+    // Mock CV service to throw an error
+    const cvService = await import('../../services/cvService')
+    vi.mocked(cvService.default.fetchProfile).mockRejectedValueOnce(
+      new Error('API Error')
+    )
+
     render(<Experience />)
 
-    // Programming Languages - use getAllByText for technologies that appear multiple times
-    const pythonElements = screen.getAllByText('Python')
-    expect(pythonElements.length).toBeGreaterThan(0)
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'Failed to load experience data. Please try again later.'
+        )
+      ).toBeInTheDocument()
+    })
 
-    const jsElements = screen.getAllByText('JavaScript')
-    expect(jsElements.length).toBeGreaterThan(0)
-
-    // Frameworks - use getAllByText for technologies that appear in multiple sections
-    const nodeJsElements = screen.getAllByText('Node.js')
-    expect(nodeJsElements.length).toBeGreaterThan(0)
-
-    const tensorFlowElements = screen.getAllByText('TensorFlow')
-    expect(tensorFlowElements.length).toBeGreaterThan(0)
-
-    // Tools - use getAllByText for tools that appear in multiple sections
-    const gitElements = screen.getAllByText('Git')
-    expect(gitElements.length).toBeGreaterThan(0)
-
-    const dockerElements = screen.getAllByText('Docker')
-    expect(dockerElements.length).toBeGreaterThan(0)
-
-    // Soft Skills
-    expect(screen.getByText('Problem Solving')).toBeInTheDocument()
-    expect(screen.getByText('Team Collaboration')).toBeInTheDocument()
+    // Should still show retry button
+    expect(screen.getByText('Retry')).toBeInTheDocument()
   })
 })
