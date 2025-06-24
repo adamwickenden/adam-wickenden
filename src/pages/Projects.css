@@ -326,7 +326,8 @@
   min-height: 3rem;
 }
 
-.tech-stack {
+.tech-stack,
+.repo-tech {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;

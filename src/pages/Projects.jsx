@@ -26,7 +26,7 @@ const Projects = () => {
         .filter(repo => !repo.private && !repo.fork)
         .map(repo => ({
           ...repo,
-          type: getProjectType(repo.name),
+          type: getProjectType(repo),
           techStack: getTechStack(repo),
         }))
         .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
@@ -45,29 +45,14 @@ const Projects = () => {
     fetchGitHubRepositories()
   }, [fetchGitHubRepositories])
 
-  // Helper function to categorize projects
-  const getProjectType = repoName => {
-    const name = repoName.toLowerCase()
-    if (
-      name.includes('unity') ||
-      name.includes('game') ||
-      name.includes('solar')
-    )
-      return 'Game/Unity'
-    if (
-      name.includes('tensor') ||
-      name.includes('ml') ||
-      name.includes('model')
-    )
-      return 'Machine Learning'
-    if (
-      name.includes('web') ||
-      name.includes('react') ||
-      name.includes('website')
-    )
-      return 'Web Development'
-    if (name.includes('robot') || name.includes('iot')) return 'Robotics/IoT'
-    return 'Software'
+  // Helper function to categorize projects based on topics only
+  const getProjectType = repo => {
+    const topics = repo.topics || []
+    
+    if (topics.includes('unity')) return 'Unity'
+    if (topics.includes('machine-learning')) return 'Machine Learning'
+    if (topics.includes('frontend')) return 'Frontend'
+    if (topics.includes('rpi')) return 'Raspberry Pi'
   }
 
   // Helper function to get tech stack from repository
