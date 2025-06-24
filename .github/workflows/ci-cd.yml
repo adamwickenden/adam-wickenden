@@ -3,6 +3,8 @@ name: CI/CD Pipeline
 on:
   push:
     branches: ['**']
+  pull_request:
+    branches: ['main']
 
 jobs:
   # Job 1: Run tests and linting
@@ -42,10 +44,55 @@ jobs:
           path: dist/
           retention-days: 1
 
-  # Job 2: Deploy to Firebase (only on main branch)
-  deploy:
+  # Job 2: Deploy to Staging (on pull requests)
+  deploy-staging:
     runs-on: ubuntu-latest
-    name: Deploy to Firebase
+    name: Deploy to Staging
+    needs: test-and-lint
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files
+          path: dist/
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy to Staging Firebase
+        run: firebase use staging && firebase deploy --only hosting --token "$FIREBASE_TOKEN"
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      - name: Comment PR with staging URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 **Staging deployment successful!**\n\n📱 Preview your changes at: https://adam-wickenden-dev.web.app\n\n✅ All tests passed and build completed successfully.'
+            })
+
+  # Job 3: Deploy to Production (only on main branch)
+  deploy-production:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
     needs: test-and-lint
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
@@ -71,29 +118,41 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Deploy to Firebase
-        run: firebase deploy --only hosting --token "$FIREBASE_TOKEN"
+      - name: Deploy to Production Firebase
+        run: firebase use production && firebase deploy --only hosting --token "$FIREBASE_TOKEN"
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
-  # Job 3: Notify deployment status
+  # Job 4: Notify deployment status
   notify:
     runs-on: ubuntu-latest
     name: Notify Status
-    needs: [test-and-lint, deploy]
+    needs: [test-and-lint, deploy-staging, deploy-production]
     if: always()
 
     steps:
-      - name: Deployment Success
-        if: needs.deploy.result == 'success'
+      - name: Production Deployment Success
+        if: needs.deploy-production.result == 'success'
         run: |
-          echo "🚀 Deployment successful!"
+          echo "🚀 Production deployment successful!"
           echo "Website is live at: https://adam-wickenden.web.app"
 
-      - name: Deployment Failed
-        if: needs.deploy.result == 'failure'
+      - name: Staging Deployment Success
+        if: needs.deploy-staging.result == 'success'
         run: |
-          echo "❌ Deployment failed!"
+          echo "🚀 Staging deployment successful!"
+          echo "Preview site is live at: https://adam-wickenden-dev.web.app"
+
+      - name: Production Deployment Failed
+        if: needs.deploy-production.result == 'failure'
+        run: |
+          echo "❌ Production deployment failed!"
+          echo "Check the logs for more information."
+
+      - name: Staging Deployment Failed
+        if: needs.deploy-staging.result == 'failure'
+        run: |
+          echo "❌ Staging deployment failed!"
           echo "Check the logs for more information."
 
       - name: Tests Failed

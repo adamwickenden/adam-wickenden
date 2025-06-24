@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "adam-wickenden"
+    "default": "adam-wickenden",
+    "production": "adam-wickenden",
+    "staging": "adam-wickenden-dev"
   }
 }

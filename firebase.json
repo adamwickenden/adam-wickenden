@@ -1,4 +1,8 @@
 {
+  "projects": {
+    "production": "adam-wickenden",
+    "staging": "adam-wickenden-dev"
+  },
   "hosting": {
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],

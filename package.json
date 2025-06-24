@@ -17,6 +17,8 @@
     "ci": "npm run lint && npm run format:check && npm run test:run",
     "preview": "vite preview",
     "deploy": "npm run build && firebase deploy",
+    "deploy:staging": "npm run build && firebase use staging && firebase deploy --only hosting",
+    "deploy:production": "npm run build && firebase use production && firebase deploy --only hosting",
     "setup": "./setup.sh",
     "clean": "rm -rf dist node_modules",
     "reinstall": "npm run clean && npm install"

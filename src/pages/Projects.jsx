@@ -48,7 +48,7 @@ const Projects = () => {
   // Helper function to categorize projects based on topics only
   const getProjectType = repo => {
     const topics = repo.topics || []
-    
+
     if (topics.includes('unity')) return 'Unity'
     if (topics.includes('machine-learning')) return 'Machine Learning'
     if (topics.includes('frontend')) return 'Frontend'
