@@ -363,11 +363,14 @@ describe('Projects Component', () => {
     })
 
     // Wait for async operations to complete and check that "Last commit" text appears
-    await waitFor(() => {
-      // Check that text contains "Last commit" instead of "Updated"
-      // Use getAllByText since there are multiple instances (Unity and repository cards)
-      const commitTexts = screen.getAllByText(/Last commit/)
-      expect(commitTexts.length).toBeGreaterThan(0)
-    }, { timeout: 3000 })
+    await waitFor(
+      () => {
+        // Check that text contains "Last commit" instead of "Updated"
+        // Use getAllByText since there are multiple instances (Unity and repository cards)
+        const commitTexts = screen.getAllByText(/Last commit/)
+        expect(commitTexts.length).toBeGreaterThan(0)
+      },
+      { timeout: 3000 }
+    )
   })
 })

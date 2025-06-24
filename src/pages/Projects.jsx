@@ -22,8 +22,7 @@ const Projects = () => {
         }
       )
 
-      const repos = response.data
-        .filter(repo => !repo.private && !repo.fork)
+      const repos = response.data.filter(repo => !repo.private && !repo.fork)
 
       // Fetch last commit date for each repository
       const reposWithCommitDates = await Promise.all(
@@ -37,16 +36,17 @@ const Projects = () => {
                 },
               }
             )
-            
-            const lastCommitDate = commitsResponse.data[0]?.commit?.author?.date || repo.pushed_at
-            
+
+            const lastCommitDate =
+              commitsResponse.data[0]?.commit?.author?.date || repo.pushed_at
+
             return {
               ...repo,
               type: getProjectType(repo),
               techStack: getTechStack(repo),
               last_commit_date: lastCommitDate,
             }
-          } catch (error) {
+          } catch {
             // If we can't fetch commits, fallback to pushed_at
             return {
               ...repo,
@@ -198,7 +198,9 @@ const Projects = () => {
                 <span>{currentProject.forks_count}</span>
               </div>
               <div className="stat">
-                <span>Last commit {formatDate(currentProject.last_commit_date)}</span>
+                <span>
+                  Last commit {formatDate(currentProject.last_commit_date)}
+                </span>
               </div>
             </div>
             <a
