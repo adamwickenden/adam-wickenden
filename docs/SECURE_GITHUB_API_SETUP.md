@@ -5,11 +5,13 @@ This guide explains how to securely use GitHub API authentication without exposi
 ## 🚨 Security Problem Solved
 
 **Before**: GitHub PAT was embedded in client-side bundle via `VITE_GITHUB_TOKEN`
+
 - ❌ Token visible in browser dev tools
 - ❌ Token accessible to anyone visiting the site
 - ❌ Token can be extracted and misused
 
 **After**: GitHub PAT stored securely on Firebase Functions
+
 - ✅ Token only exists on server-side
 - ✅ Client makes requests through secure proxy
 - ✅ No sensitive data exposed to users
@@ -47,7 +49,7 @@ firebase functions:secrets:set GITHUB_TOKEN
 firebase use staging
 firebase deploy --only functions
 
-firebase use production  
+firebase use production
 firebase deploy --only functions
 ```
 
@@ -68,6 +70,7 @@ npm run dev
 ```
 
 Visit `http://localhost:5173` and verify:
+
 - GitHub repositories load correctly
 - No authentication tokens visible in browser dev tools
 - Network requests go to Firebase Functions proxy
@@ -93,7 +96,7 @@ graph LR
     B -->|Authenticated Request| C[GitHub API]
     C -->|Response| B
     B -->|Clean Response| A
-    
+
     style A fill:#e1f5fe
     style B fill:#f3e5f5
     style C fill:#e8f5e8
@@ -102,13 +105,15 @@ graph LR
 ## 🔍 API Endpoints
 
 ### GitHub Proxy
+
 - **URL**: `/githubProxy`
 - **Method**: GET
-- **Parameters**: 
+- **Parameters**:
   - `path`: GitHub API path (e.g., `users/adamwickenden/repos`)
   - Additional query parameters as needed
 
 ### Health Check
+
 - **URL**: `/healthCheck`
 - **Method**: GET
 - **Response**: Server status and timestamp
@@ -128,6 +133,7 @@ firebase deploy --only functions
 ### CORS Issues
 
 The Functions are configured to allow requests from:
+
 - `http://localhost:5173` (Vite dev server)
 - `http://localhost:3000` (Alternative dev server)
 - `https://adamwickenden.dev` (Production domain)
@@ -137,6 +143,7 @@ The Functions are configured to allow requests from:
 ### Local Development Issues
 
 1. Make sure Firebase emulators are running:
+
    ```bash
    firebase emulators:start --only functions
    ```
@@ -149,6 +156,7 @@ The Functions are configured to allow requests from:
 ## 📊 Rate Limits
 
 With authenticated requests through the proxy:
+
 - **Authenticated**: 5,000 requests/hour
 - **Much higher** than unauthenticated (60 requests/hour)
 
@@ -195,4 +203,4 @@ If you encounter issues:
 1. Check Firebase Functions logs: `firebase functions:log`
 2. Verify token configuration: `firebase functions:config:get`
 3. Test Functions locally: `firebase emulators:start --only functions`
-4. Check GitHub token permissions in GitHub settings 
+4. Check GitHub token permissions in GitHub settings

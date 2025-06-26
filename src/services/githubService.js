@@ -24,7 +24,7 @@ class GitHubService {
     if (import.meta.env.DEV) {
       return 'http://localhost:5001/adam-wickenden/us-central1/githubProxy'
     }
-    
+
     // Production URLs - adjust based on your Firebase project
     const hostname = window.location.hostname
     if (hostname.includes('staging')) {
@@ -45,14 +45,19 @@ class GitHubService {
       const response = await this.api.get('', {
         params: {
           path,
-          ...params
-        }
+          ...params,
+        },
       })
       return response
     } catch (error) {
       // Enhanced error handling for proxy requests
-      if (error.response?.status === 500 && error.response?.data?.error === 'GitHub token not configured') {
-        throw new Error('GitHub token not configured on server. Please contact the administrator.')
+      if (
+        error.response?.status === 500 &&
+        error.response?.data?.error === 'GitHub token not configured'
+      ) {
+        throw new Error(
+          'GitHub token not configured on server. Please contact the administrator.'
+        )
       }
       throw error
     }
@@ -149,9 +154,12 @@ class GitHubService {
    */
   async fetchLatestCommit(owner, repo) {
     try {
-      const response = await this.proxyRequest(`repos/${owner}/${repo}/commits`, {
-        per_page: 1,
-      })
+      const response = await this.proxyRequest(
+        `repos/${owner}/${repo}/commits`,
+        {
+          per_page: 1,
+        }
+      )
       return response.data[0]
     } catch (error) {
       console.warn(`Failed to fetch latest commit for ${repo}:`, error.message)
