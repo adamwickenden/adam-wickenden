@@ -2,22 +2,59 @@ import axios from 'axios'
 
 class GitHubService {
   constructor() {
-    this.baseURL = 'https://api.github.com'
+    // Use Firebase Functions proxy instead of direct GitHub API
+    this.baseURL = this.getProxyBaseURL()
     this.username = 'adamwickenden'
 
-    // Create axios instance with authentication if token is available
+    // Create axios instance for proxy requests
     this.api = axios.create({
       baseURL: this.baseURL,
       headers: {
-        Accept: 'application/vnd.github.v3+json',
-        'User-Agent': 'Portfolio-Website',
+        Accept: 'application/json',
       },
     })
+  }
 
-    // Add GitHub token if available
-    const token = import.meta.env.VITE_GITHUB_TOKEN
-    if (token) {
-      this.api.defaults.headers.Authorization = `token ${token}`
+  /**
+   * Get the base URL for the Firebase Functions proxy
+   * @returns {string} Proxy base URL
+   */
+  getProxyBaseURL() {
+    // Check if we're in development mode
+    if (import.meta.env.DEV) {
+      return 'http://localhost:5001/adam-wickenden/us-central1/githubProxy'
+    }
+    
+    // Production URLs - adjust based on your Firebase project
+    const hostname = window.location.hostname
+    if (hostname.includes('staging')) {
+      return 'https://us-central1-adam-wickenden-dev.cloudfunctions.net/githubProxy'
+    } else {
+      return 'https://us-central1-adam-wickenden.cloudfunctions.net/githubProxy'
+    }
+  }
+
+  /**
+   * Make a request through the Firebase Functions proxy
+   * @param {string} path - GitHub API path
+   * @param {Object} params - Query parameters
+   * @returns {Promise} Axios response
+   */
+  async proxyRequest(path, params = {}) {
+    try {
+      const response = await this.api.get('', {
+        params: {
+          path,
+          ...params
+        }
+      })
+      return response
+    } catch (error) {
+      // Enhanced error handling for proxy requests
+      if (error.response?.status === 500 && error.response?.data?.error === 'GitHub token not configured') {
+        throw new Error('GitHub token not configured on server. Please contact the administrator.')
+      }
+      throw error
     }
   }
 
@@ -35,13 +72,11 @@ class GitHubService {
         type = 'owner',
       } = options
 
-      const response = await this.api.get(`/users/${this.username}/repos`, {
-        params: {
-          per_page,
-          sort,
-          direction,
-          type,
-        },
+      const response = await this.proxyRequest(`users/${this.username}/repos`, {
+        per_page,
+        sort,
+        direction,
+        type,
       })
 
       // Filter out private repos and forks
@@ -96,7 +131,7 @@ class GitHubService {
           error.response.headers['x-ratelimit-reset'] * 1000
         )
         throw new Error(
-          `GitHub API rate limit exceeded. Resets at ${resetTime.toLocaleTimeString()}. Consider adding a GitHub token for higher limits.`
+          `GitHub API rate limit exceeded. Resets at ${resetTime.toLocaleTimeString()}.`
         )
       }
 
@@ -114,10 +149,8 @@ class GitHubService {
    */
   async fetchLatestCommit(owner, repo) {
     try {
-      const response = await this.api.get(`/repos/${owner}/${repo}/commits`, {
-        params: {
-          per_page: 1,
-        },
+      const response = await this.proxyRequest(`repos/${owner}/${repo}/commits`, {
+        per_page: 1,
       })
       return response.data[0]
     } catch (error) {
@@ -224,7 +257,7 @@ class GitHubService {
    */
   async getRateLimit() {
     try {
-      const response = await this.api.get('/rate_limit')
+      const response = await this.proxyRequest('rate_limit')
       return response.data
     } catch (error) {
       console.error('Error fetching rate limit:', error)

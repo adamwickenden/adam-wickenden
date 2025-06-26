@@ -3,10 +3,18 @@
     "production": "adam-wickenden",
     "staging": "adam-wickenden-dev"
   },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
+  },
   "hosting": {
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "githubProxy"
+      },
       {
         "source": "**",
         "destination": "/index.html"
