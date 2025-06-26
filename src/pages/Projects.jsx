@@ -9,6 +9,8 @@ const Projects = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeUnityProject, setActiveUnityProject] = useState(0)
+  const [touchStart, setTouchStart] = useState(null)
+  const [touchEnd, setTouchEnd] = useState(null)
 
   const fetchGitHubRepositories = useCallback(async () => {
     try {
@@ -135,6 +137,31 @@ const Projects = () => {
     )
   }
 
+  // Touch handlers for swipe navigation
+  const handleTouchStart = e => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = e => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = projects => {
+    if (!touchStart || !touchEnd) return
+
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > 50
+    const isRightSwipe = distance < -50
+
+    if (isLeftSwipe && activeUnityProject < projects.length - 1) {
+      setActiveUnityProject(activeUnityProject + 1)
+    }
+    if (isRightSwipe && activeUnityProject > 0) {
+      setActiveUnityProject(activeUnityProject - 1)
+    }
+  }
+
   // Unity Project Component with Navigation (for GitHub repositories)
   const UnityProjectViewer = ({ projects, activeIndex, onProjectChange }) => {
     if (!projects || projects.length === 0) {
@@ -157,7 +184,12 @@ const Projects = () => {
     const currentProject = projects[activeIndex]
 
     return (
-      <div className="unity-embed">
+      <div
+        className="unity-embed"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={() => handleTouchEnd(projects)}
+      >
         <div className="unity-header">
           <h4>{currentProject.name}</h4>
           <p>{currentProject.description || 'No description available'}</p>
@@ -170,8 +202,11 @@ const Projects = () => {
               key={project.id}
               className={`unity-nav-btn ${index === activeIndex ? 'active' : ''}`}
               onClick={() => onProjectChange(index)}
+              title={project.name}
             >
-              {project.name}
+              {project.name.length > 12
+                ? `${project.name.substring(0, 12)}...`
+                : project.name}
             </button>
           ))}
         </div>
