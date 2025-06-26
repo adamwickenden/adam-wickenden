@@ -146,7 +146,7 @@ npm run test
 
 ### Setting Up CI/CD
 
-See [docs/CICD_SETUP.md](docs/CICD_SETUP.md) for detailed setup instructions.
+See [docs/README.md](docs/README.md) for comprehensive setup and deployment instructions.
 
 ## 📁 Project Structure
 
@@ -164,7 +164,7 @@ adam-website/
 │   └── __tests__/         # Integration tests
 ├── .github/
 │   └── workflows/         # GitHub Actions workflows
-├── docs/                  # Documentation
+├── docs/                  # Complete documentation (README.md)
 └── dist/                  # Production build output
 ```
 
