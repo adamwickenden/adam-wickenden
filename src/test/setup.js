@@ -1,6 +1,96 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 
+// Mock GitHub Service - Create a proper mock for the singleton instance
+const mockGitHubService = {
+  fetchRepositories: vi.fn().mockImplementation(() =>
+    Promise.resolve([
+      {
+        id: 1,
+        name: 'TensorFlowNBs',
+        description: 'A collection of TensorFlow notebooks',
+        html_url: 'https://github.com/adamwickenden/TensorFlowNBs',
+        stargazers_count: 5,
+        forks_count: 2,
+        watchers_count: 3,
+        language: 'Python',
+        topics: ['machine-learning', 'tensorflow'],
+        type: 'Machine Learning',
+        techStack: ['Python', 'TensorFlow'],
+        last_commit_date: '2023-12-01T10:00:00Z',
+        private: false,
+        fork: false,
+      },
+      {
+        id: 2,
+        name: 'Unity-Game',
+        description: 'A Unity game project',
+        html_url: 'https://github.com/adamwickenden/Unity-Game',
+        stargazers_count: 10,
+        forks_count: 3,
+        watchers_count: 5,
+        language: 'C#',
+        topics: ['unity', 'game'],
+        type: 'Unity',
+        techStack: ['C#', 'Unity'],
+        last_commit_date: '2023-11-15T14:30:00Z',
+        private: false,
+        fork: false,
+      },
+      {
+        id: 3,
+        name: 'React-Portfolio',
+        description: 'A React portfolio website',
+        html_url: 'https://github.com/adamwickenden/React-Portfolio',
+        stargazers_count: 8,
+        forks_count: 1,
+        watchers_count: 4,
+        language: 'JavaScript',
+        topics: ['frontend', 'react'],
+        type: 'Frontend',
+        techStack: ['JavaScript', 'React'],
+        last_commit_date: '2023-12-05T09:15:00Z',
+        private: false,
+        fork: false,
+      },
+    ])
+  ),
+  getRateLimit: vi.fn().mockImplementation(() =>
+    Promise.resolve({
+      rate: {
+        limit: 5000,
+        remaining: 4999,
+        reset: Date.now() / 1000 + 3600,
+      },
+    })
+  ),
+  fetchLatestCommit: vi.fn().mockImplementation(() =>
+    Promise.resolve({
+      commit: {
+        author: {
+          date: '2023-12-01T10:00:00Z',
+        },
+      },
+    })
+  ),
+  getProjectType: vi.fn().mockImplementation(repo => {
+    if (repo.topics?.includes('unity')) return 'Unity'
+    if (repo.topics?.includes('machine-learning')) return 'Machine Learning'
+    if (repo.topics?.includes('frontend')) return 'Frontend'
+    return 'Other'
+  }),
+  getTechStack: vi.fn().mockImplementation(repo => {
+    if (repo.language === 'Python') return ['Python', 'TensorFlow']
+    if (repo.language === 'C#') return ['C#', 'Unity']
+    if (repo.language === 'JavaScript') return ['JavaScript', 'React']
+    return [repo.language || 'Unknown']
+  }),
+}
+
+vi.mock('../services/githubService.js', () => ({
+  default: mockGitHubService,
+}))
+
 // Mock CV Service
 vi.mock('../services/cvService.js', () => ({
   default: {

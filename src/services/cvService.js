@@ -15,7 +15,7 @@ const CV_DATA = {
       company: 'Faculty.ai',
       startDate: '2021-11-01',
       endDate: null,
-      duration: '2+ years',
+      duration: '3+ years',
       location: 'London, UK',
       description:
         'Leading machine learning projects in Radio Frequency analysis and upskilling colleagues in signal processing.',

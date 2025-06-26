@@ -63,7 +63,7 @@ const Home = () => {
     journal:
       'IEEE International Symposium on Geoscience and Remote Sensing (IGARSS)',
     summary:
-      'This research presents the first use of convolutional neural network (CNN) models to remotely detect and monitor retrogressive thaw slumps in northern permafrost using Sentinel-2 satellite data. The study achieved strong model performance (precision, recall, and F1 scores > 0.8) and demonstrates the potential for automated monitoring of rapid environmental changes in permafrost regions, representing a crucial first step toward understanding greenhouse gas emissions from permafrost thaw.',
+      'This research presents the use of convolutional neural network (CNN) models to remotely detect and monitor retrogressive thaw slumps in northern permafrost using Sentinel-2 satellite data. The study achieved strong model performance (precision, recall, and F1 scores > 0.8) and demonstrates the potential for automated monitoring of rapid environmental changes in permafrost regions, representing a crucial step toward understanding greenhouse gas emissions from permafrost thaw.',
     url: 'https://cris.maastrichtuniversity.nl/en/publications/tracking-rapid-permafrost-thaw-through-time-exploring-the-potenti',
     type: 'Conference Paper',
     keywords: [

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { Github, ExternalLink, Star, GitFork, Eye, Play } from 'lucide-react'
-import axios from 'axios'
+import githubService from '../services/githubService'
 import './Projects.css'
 
 const Projects = () => {
@@ -9,33 +9,22 @@ const Projects = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeUnityProject, setActiveUnityProject] = useState(0)
+  const [touchStart, setTouchStart] = useState(null)
+  const [touchEnd, setTouchEnd] = useState(null)
 
   const fetchGitHubRepositories = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await axios.get(
-        'https://api.github.com/users/adamwickenden/repos',
-        {
-          params: {
-            per_page: 20,
-          },
-        }
-      )
-
-      const repos = response.data
-        .filter(repo => !repo.private && !repo.fork)
-        .map(repo => ({
-          ...repo,
-          type: getProjectType(repo.name),
-          techStack: getTechStack(repo),
-        }))
-        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-
-      setRepositories(repos)
       setError(null)
+
+      const repositories = await githubService.fetchRepositories({
+        per_page: 20,
+      })
+
+      setRepositories(repositories)
     } catch (err) {
       console.error('Error fetching repositories:', err)
-      setError('Failed to fetch GitHub repositories')
+      setError(err.message || 'Failed to fetch GitHub repositories')
     } finally {
       setLoading(false)
     }
@@ -45,55 +34,6 @@ const Projects = () => {
     fetchGitHubRepositories()
   }, [fetchGitHubRepositories])
 
-  // Helper function to categorize projects
-  const getProjectType = repoName => {
-    const name = repoName.toLowerCase()
-    if (
-      name.includes('unity') ||
-      name.includes('game') ||
-      name.includes('solar')
-    )
-      return 'Game/Unity'
-    if (
-      name.includes('tensor') ||
-      name.includes('ml') ||
-      name.includes('model')
-    )
-      return 'Machine Learning'
-    if (
-      name.includes('web') ||
-      name.includes('react') ||
-      name.includes('website')
-    )
-      return 'Web Development'
-    if (name.includes('robot') || name.includes('iot')) return 'Robotics/IoT'
-    return 'Software'
-  }
-
-  // Helper function to get tech stack from repository
-  const getTechStack = repo => {
-    const stack = []
-    if (repo.language) stack.push(repo.language)
-
-    // Add common technologies based on repository topics or name
-    const topics = repo.topics || []
-    const name = repo.name.toLowerCase()
-
-    if (topics.includes('react') || name.includes('react')) stack.push('React')
-    if (topics.includes('unity') || name.includes('unity')) stack.push('Unity')
-    if (topics.includes('tensorflow') || name.includes('tensor'))
-      stack.push('TensorFlow')
-    if (topics.includes('python') || repo.language === 'Python')
-      stack.push('Python')
-    if (topics.includes('javascript') || repo.language === 'JavaScript')
-      stack.push('JavaScript')
-    if (topics.includes('csharp') || repo.language === 'C#') stack.push('C#')
-    if (topics.includes('firebase') || name.includes('firebase'))
-      stack.push('Firebase')
-
-    return [...new Set(stack)]
-  }
-
   // Helper function to format date
   const formatDate = dateString => {
     return new Date(dateString).toLocaleDateString()
@@ -101,21 +41,52 @@ const Projects = () => {
 
   // Filter functions for different sections
   const getUnityProjects = () => {
-    return repositories.filter(
-      repo => repo.topics && repo.topics.includes('unity')
+    return (
+      repositories?.filter(
+        repo => repo.topics && repo.topics.includes('unity')
+      ) || []
     )
   }
 
   const getMachineLearningProjects = () => {
-    return repositories.filter(
-      repo => repo.topics && repo.topics.includes('machine-learning')
+    return (
+      repositories?.filter(
+        repo => repo.topics && repo.topics.includes('machine-learning')
+      ) || []
     )
   }
 
   const getFrontendProjects = () => {
-    return repositories.filter(
-      repo => repo.topics && repo.topics.includes('frontend')
+    return (
+      repositories?.filter(
+        repo => repo.topics && repo.topics.includes('frontend')
+      ) || []
     )
+  }
+
+  // Touch handlers for swipe navigation
+  const handleTouchStart = e => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = e => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = projects => {
+    if (!touchStart || !touchEnd) return
+
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > 50
+    const isRightSwipe = distance < -50
+
+    if (isLeftSwipe && activeUnityProject < projects.length - 1) {
+      setActiveUnityProject(activeUnityProject + 1)
+    }
+    if (isRightSwipe && activeUnityProject > 0) {
+      setActiveUnityProject(activeUnityProject - 1)
+    }
   }
 
   // Unity Project Component with Navigation (for GitHub repositories)
@@ -140,7 +111,12 @@ const Projects = () => {
     const currentProject = projects[activeIndex]
 
     return (
-      <div className="unity-embed">
+      <div
+        className="unity-embed"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={() => handleTouchEnd(projects)}
+      >
         <div className="unity-header">
           <h4>{currentProject.name}</h4>
           <p>{currentProject.description || 'No description available'}</p>
@@ -153,8 +129,11 @@ const Projects = () => {
               key={project.id}
               className={`unity-nav-btn ${index === activeIndex ? 'active' : ''}`}
               onClick={() => onProjectChange(index)}
+              title={project.name}
             >
-              {project.name}
+              {project.name.length > 12
+                ? `${project.name.substring(0, 12)}...`
+                : project.name}
             </button>
           ))}
         </div>
@@ -181,7 +160,9 @@ const Projects = () => {
                 <span>{currentProject.forks_count}</span>
               </div>
               <div className="stat">
-                <span>Updated {formatDate(currentProject.updated_at)}</span>
+                <span>
+                  Last commit {formatDate(currentProject.last_commit_date)}
+                </span>
               </div>
             </div>
             <a
@@ -209,7 +190,7 @@ const Projects = () => {
         techStack: PropTypes.arrayOf(PropTypes.string).isRequired,
         stargazers_count: PropTypes.number.isRequired,
         forks_count: PropTypes.number.isRequired,
-        updated_at: PropTypes.string.isRequired,
+        last_commit_date: PropTypes.string.isRequired,
       })
     ).isRequired,
     activeIndex: PropTypes.number.isRequired,
@@ -249,7 +230,7 @@ const Projects = () => {
       </div>
       <div className="repo-footer">
         <span className="repo-updated">
-          Updated {formatDate(repo.updated_at)}
+          Last commit {formatDate(repo.last_commit_date)}
         </span>
         <a
           href={repo.html_url}
@@ -275,7 +256,7 @@ const Projects = () => {
       forks_count: PropTypes.number.isRequired,
       watchers_count: PropTypes.number.isRequired,
       techStack: PropTypes.arrayOf(PropTypes.string).isRequired,
-      updated_at: PropTypes.string.isRequired,
+      last_commit_date: PropTypes.string.isRequired,
       html_url: PropTypes.string.isRequired,
     }).isRequired,
   }
