@@ -97,22 +97,19 @@ img {
   color: white;
 }
 
-/* Custom scrollbar */
+/* Hide scrollbar but keep functionality */
 ::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  width: 0px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: 10px;
+  background: transparent;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-dark);
+/* For Firefox */
+html {
+  scrollbar-width: none;
 }
 
 /* Prevent horizontal scrolling */

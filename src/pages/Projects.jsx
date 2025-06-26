@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { Github, ExternalLink, Star, GitFork, Eye, Play } from 'lucide-react'
-import axios from 'axios'
+import githubService from '../services/githubService'
 import './Projects.css'
 
 const Projects = () => {
@@ -15,61 +15,16 @@ const Projects = () => {
   const fetchGitHubRepositories = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await axios.get(
-        'https://api.github.com/users/adamwickenden/repos',
-        {
-          params: {
-            per_page: 20,
-          },
-        }
-      )
-
-      const repos = response.data.filter(repo => !repo.private && !repo.fork)
-
-      // Fetch last commit date for each repository
-      const reposWithCommitDates = await Promise.all(
-        repos.map(async repo => {
-          try {
-            const commitsResponse = await axios.get(
-              `https://api.github.com/repos/${repo.owner.login}/${repo.name}/commits`,
-              {
-                params: {
-                  per_page: 1,
-                },
-              }
-            )
-
-            const lastCommitDate =
-              commitsResponse.data[0]?.commit?.author?.date || repo.pushed_at
-
-            return {
-              ...repo,
-              type: getProjectType(repo),
-              techStack: getTechStack(repo),
-              last_commit_date: lastCommitDate,
-            }
-          } catch {
-            // If we can't fetch commits, fallback to pushed_at
-            return {
-              ...repo,
-              type: getProjectType(repo),
-              techStack: getTechStack(repo),
-              last_commit_date: repo.pushed_at,
-            }
-          }
-        })
-      )
-
-      // Sort by last commit date (most recent first)
-      const sortedRepos = reposWithCommitDates.sort(
-        (a, b) => new Date(b.last_commit_date) - new Date(a.last_commit_date)
-      )
-
-      setRepositories(sortedRepos)
       setError(null)
+
+      const repositories = await githubService.fetchRepositories({
+        per_page: 20,
+      })
+
+      setRepositories(repositories)
     } catch (err) {
       console.error('Error fetching repositories:', err)
-      setError('Failed to fetch GitHub repositories')
+      setError(err.message || 'Failed to fetch GitHub repositories')
     } finally {
       setLoading(false)
     }
@@ -79,40 +34,6 @@ const Projects = () => {
     fetchGitHubRepositories()
   }, [fetchGitHubRepositories])
 
-  // Helper function to categorize projects based on topics only
-  const getProjectType = repo => {
-    const topics = repo.topics || []
-
-    if (topics.includes('unity')) return 'Unity'
-    if (topics.includes('machine-learning')) return 'Machine Learning'
-    if (topics.includes('frontend')) return 'Frontend'
-    if (topics.includes('rpi')) return 'Raspberry Pi'
-  }
-
-  // Helper function to get tech stack from repository
-  const getTechStack = repo => {
-    const stack = []
-    if (repo.language) stack.push(repo.language)
-
-    // Add common technologies based on repository topics or name
-    const topics = repo.topics || []
-    const name = repo.name.toLowerCase()
-
-    if (topics.includes('react') || name.includes('react')) stack.push('React')
-    if (topics.includes('unity') || name.includes('unity')) stack.push('Unity')
-    if (topics.includes('tensorflow') || name.includes('tensor'))
-      stack.push('TensorFlow')
-    if (topics.includes('python') || repo.language === 'Python')
-      stack.push('Python')
-    if (topics.includes('javascript') || repo.language === 'JavaScript')
-      stack.push('JavaScript')
-    if (topics.includes('csharp') || repo.language === 'C#') stack.push('C#')
-    if (topics.includes('firebase') || name.includes('firebase'))
-      stack.push('Firebase')
-
-    return [...new Set(stack)]
-  }
-
   // Helper function to format date
   const formatDate = dateString => {
     return new Date(dateString).toLocaleDateString()
@@ -120,20 +41,26 @@ const Projects = () => {
 
   // Filter functions for different sections
   const getUnityProjects = () => {
-    return repositories.filter(
-      repo => repo.topics && repo.topics.includes('unity')
+    return (
+      repositories?.filter(
+        repo => repo.topics && repo.topics.includes('unity')
+      ) || []
     )
   }
 
   const getMachineLearningProjects = () => {
-    return repositories.filter(
-      repo => repo.topics && repo.topics.includes('machine-learning')
+    return (
+      repositories?.filter(
+        repo => repo.topics && repo.topics.includes('machine-learning')
+      ) || []
     )
   }
 
   const getFrontendProjects = () => {
-    return repositories.filter(
-      repo => repo.topics && repo.topics.includes('frontend')
+    return (
+      repositories?.filter(
+        repo => repo.topics && repo.topics.includes('frontend')
+      ) || []
     )
   }
 
