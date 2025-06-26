@@ -136,3 +136,4 @@ jobs:
         run: firebase use production && firebase deploy --only hosting --token "$FIREBASE_TOKEN"
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+ 
